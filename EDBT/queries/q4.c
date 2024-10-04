@@ -48,7 +48,7 @@ void run_query4(struct _config_db config_db, struct _config_query params){
     int plim_repetition = 0;
     
     pmcs_get_value(&start);
-    magic_timing_begin(&cycleLo, &cycleHi);
+    //magic_timing_begin(&cycleLo, &cycleHi);
     for(int i = 0; i < config_db.row_count; i++){
       if (plim[i*params.enabled_column_number + 2] > k) {
         if(!already_grouped((plim[i*params.enabled_column_number+1]&((T)0xFF)), plim_group_array_counter, plim_group_array)) {
@@ -79,7 +79,7 @@ void run_query4(struct _config_db config_db, struct _config_query params){
         }
       }
     }
-    magic_timing_end(&cycleLo, &cycleHi);
+    //magic_timing_end(&cycleLo, &cycleHi);
     pmcs_get_value(&end);
     res = pmcs_diff(&end, &start);
     fprintf(params.output_file,"q4, r, c, %d, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu\n", params.enabled_column_number, config_db.row_size, config_db.row_count, config_db.column_widths[0], cycleLo, res.l1_references, res.l1_refills, res.l2_references, res.l2_refills, res.inst_retired);
@@ -98,7 +98,7 @@ void run_query4(struct _config_db config_db, struct _config_query params){
     
     // start RME hot
     pmcs_get_value(&start);
-    magic_timing_begin(&cycleLo, &cycleHi);
+    //magic_timing_begin(&cycleLo, &cycleHi);
     for(int i = 0; i < config_db.row_count; i++){
       if (plim[i*params.enabled_column_number + 2] > k) {
         if(!already_grouped((plim[i*params.enabled_column_number+1]&((T)0xFF)), plim_group_array_counter, plim_group_array)) {
@@ -129,7 +129,7 @@ void run_query4(struct _config_db config_db, struct _config_query params){
         }
       }
     }
-    magic_timing_end(&cycleLo, &cycleHi);
+    //magic_timing_end(&cycleLo, &cycleHi);
     pmcs_get_value(&end);
     res = pmcs_diff(&end, &start);
     fprintf(params.output_file,"q4, r, h, %d, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu\n", params.enabled_column_number, config_db.row_size, config_db.row_count, config_db.column_widths[0], cycleLo, res.l1_references, res.l1_refills, res.l2_references, res.l2_refills, res.inst_retired);
@@ -148,7 +148,7 @@ void run_query4(struct _config_db config_db, struct _config_query params){
     plim_repetition = 0;
 
     pmcs_get_value(&start);
-    magic_timing_begin(&cycleLo, &cycleHi);
+    //magic_timing_begin(&cycleLo, &cycleHi);
 
     for(int i = 0; i < config_db.row_count; i++) {
         if (dram[(i*config_db.row_size + params.col_offsets[2])/sizeof(T)] > k) {
@@ -181,7 +181,7 @@ void run_query4(struct _config_db config_db, struct _config_query params){
         }
     }
 
-    magic_timing_end(&cycleLo, &cycleHi);
+    //magic_timing_end(&cycleLo, &cycleHi);
     pmcs_get_value(&end);
     res = pmcs_diff(&end, &start);
     fprintf(params.output_file,"q4, d, -, %d, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu\n", params.enabled_column_number, config_db.row_size, config_db.row_count, config_db.column_widths[0], cycleLo, res.l1_references, res.l1_refills, res.l2_references, res.l2_refills, res.inst_retired);
@@ -203,7 +203,7 @@ void run_query4(struct _config_db config_db, struct _config_query params){
     int plim_repetition = 0;
 
     pmcs_get_value(&start);
-    magic_timing_begin(&cycleLo, &cycleHi);
+    //magic_timing_begin(&cycleLo, &cycleHi);
 
     for(int i = 0; i < config_db.row_count; i++) {
         if (dram[(i + config_db.row_count * (params.col_offsets[2])/sizeof(T))] > k) {
@@ -236,7 +236,7 @@ void run_query4(struct _config_db config_db, struct _config_query params){
         }
     }
 
-    magic_timing_end(&cycleLo, &cycleHi);
+    //magic_timing_end(&cycleLo, &cycleHi);
     pmcs_get_value(&end);
     res = pmcs_diff(&end, &start);
     fprintf(params.output_file,"q4, c, -, %d, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu\n", params.enabled_column_number, config_db.row_size, config_db.row_count, config_db.column_widths[0], cycleLo, res.l1_references, res.l1_refills, res.l2_references, res.l2_refills, res.inst_retired);

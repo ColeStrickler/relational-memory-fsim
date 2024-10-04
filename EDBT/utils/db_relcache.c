@@ -39,12 +39,12 @@ int reset_relcache(unsigned int frame_offset) {
     
     int lpd_fd  = open_fd();
     struct _config* config = (struct _config *)mmap((void*)0, LPD0_SIZE, PROT_EXEC|PROT_READ|PROT_WRITE, MAP_SHARED, lpd_fd, LPD0_ADDR);
-    __dsb();
+    //__dsb();
     // reset
     config->frame_offset = frame_offset; 
     unsigned int reset_data = config->reset;
     config->reset = (reset_data + 1) & 0x1; 
-    __dsb();
+   // __dsb();
     //unmap
     int unmap_result = munmap(config, LPD0_SIZE);
     return unmap_result;

@@ -36,7 +36,7 @@ void run_query1(struct _config_db config_db, struct _config_query params) {
         // move multiplication outside
         unsigned width = config_db.column_widths[0];
         pmcs_get_value(&start);
-        magic_timing_begin(&cycleLo, &cycleHi);
+        //magic_timing_begin(&cycleLo, &cycleHi);
         for(int i = 0; i < config_db.row_count; i++){
           unsigned offset = 0;
           for(int j=0; j<params.enabled_column_number; j++){
@@ -44,14 +44,14 @@ void run_query1(struct _config_db config_db, struct _config_query params) {
             data_count++;
           }    
         }
-        magic_timing_end(&cycleLo, &cycleHi);
+        //magic_timing_end(&cycleLo, &cycleHi);
         pmcs_get_value(&end);
         res = pmcs_diff(&end, &start);
         fprintf(params.output_file,"q1, r, c, %d, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu\n", params.enabled_column_number, config_db.row_size, config_db.row_count, config_db.column_widths[0], cycleLo, res.l1_references, res.l1_refills, res.l2_references, res.l2_refills, res.inst_retired);
 
         data_count = 0;
         pmcs_get_value(&start);
-        magic_timing_begin(&cycleLo, &cycleHi);
+        //magic_timing_begin(&cycleLo, &cycleHi);
         for(int i = 0; i < config_db.row_count; i++){
           unsigned offset = 0;
           for(int j=0; j<params.enabled_column_number; j++){
@@ -60,21 +60,21 @@ void run_query1(struct _config_db config_db, struct _config_query params) {
           }   
         }
 
-        magic_timing_end(&cycleLo, &cycleHi);
+        //magic_timing_end(&cycleLo, &cycleHi);
         pmcs_get_value(&end);
         res = pmcs_diff(&end, &start);
         fprintf(params.output_file,"q1, r, h, %d, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu\n", params.enabled_column_number, config_db.row_size, config_db.row_count, config_db.column_widths[0], cycleLo, res.l1_references, res.l1_refills, res.l2_references, res.l2_refills, res.inst_retired);
         
         data_count = 0;
         pmcs_get_value(&start);
-        magic_timing_begin(&cycleLo, &cycleHi);
+        //magic_timing_begin(&cycleLo, &cycleHi);
         for(int i = 0; i < config_db.row_count; i++){
           for(int j=0; j<params.enabled_column_number; j++){
                row_array[data_count] = *(T*)(dram + i*config_db.row_size + params.col_offsets[j]);
                data_count++;
           }
         }
-        magic_timing_end(&cycleLo, &cycleHi);
+        //magic_timing_end(&cycleLo, &cycleHi);
         pmcs_get_value(&end);
         res = pmcs_diff(&end, &start);
        fprintf(params.output_file,"q1, d, -, %d, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu\n", params.enabled_column_number, config_db.row_size, config_db.row_count, config_db.column_widths[0], cycleLo, res.l1_references, res.l1_refills, res.l2_references, res.l2_refills, res.inst_retired);
@@ -93,14 +93,14 @@ void run_query1(struct _config_db config_db, struct _config_query params) {
         T *col_array = malloc(config_db.row_count * params.enabled_column_number * sizeof(T));
         data_count = 0;
         pmcs_get_value(&start);
-        magic_timing_begin(&cycleLo, &cycleHi);
+        //magic_timing_begin(&cycleLo, &cycleHi);
         for (int i = 0; i < config_db.row_count; i++) {
             for (int j = 0; j < params.enabled_column_number; j++) {
                 // for now only for projectivity experiment
                 col_array[data_count++] = *(T*)(dram + (i + j * config_db.row_count) * sizeof(T));
             }
         }
-        magic_timing_end(&cycleLo, &cycleHi);
+        //magic_timing_end(&cycleLo, &cycleHi);
         pmcs_get_value(&end);
         res = pmcs_diff(&end, &start);
         fprintf(params.output_file,"q1, c, -, %d, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu\n", params.enabled_column_number, config_db.row_size, config_db.row_count, config_db.column_widths[0], cycleLo, res.l1_references, res.l1_refills, res.l2_references, res.l2_refills, res.inst_retired);
