@@ -1,14 +1,16 @@
 COL CW1
 bench, mem, temp, enabled_col_num, row_size, row_count, col_width, cycles, l1_references, l1_refills, l2_
 references, l2_refills, inst_retired
-q1, c, -, 3, 16, 43690, 4, 0, 0, 0, 0, 0, 0,5514000
-q1, c, -, 3, 16, 43690, 4, 0, 0, 0, 0, 0, 0,5461000
+q1, c, -, 3, 16, 43690, 1, 0, 0, 0, 0, 0, 0,5409000
+q1, c, -, 3, 16, 43690, 1, 0, 0, 0, 0, 0, 0,5508000
+
 
 
 COL CW2
-bench, mem, temp, enabled_col_num, row_size, row_count, col_width, cycles, l1_references, l1_refills, l2_references, l2_refills, inst_retired
-q1, c, -, 3, 32, 43690, 4, 0, 0, 0, 0, 0, 0,5429000
-q1, c, -, 3, 32, 43690, 4, 0, 0, 0, 0, 0, 0,5602000
+bench, mem, temp, enabled_col_num, row_size, row_count, col_width, cycles, l1_references, l1_refills, l2_
+references, l2_refills, inst_retired
+q1, c, -, 3, 128, 43690, 2, 0, 0, 0, 0, 0, 0,5426000
+q1, c, -, 3, 128, 43690, 2, 0, 0, 0, 0, 0, 0,5363000
 
 
 COL CW4
@@ -19,31 +21,33 @@ q1, c, -, 3, 64, 43690, 4, 0, 0, 0, 0, 0, 0,5597000
 
 COL CW8
 bench, mem, temp, enabled_col_num, row_size, row_count, col_width, cycles, l1_references, l1_refills, l2_references, l2_refills, inst_retired
-q1, c, -, 3, 128, 43690, 4, 0, 0, 0, 0, 0, 0,5603000
-q1, c, -, 3, 128, 43690, 4, 0, 0, 0, 0, 0, 0,5591000
+q1, c, -, 3, 128, 43690, 8, 0, 0, 0, 0, 0, 0,5525000
+q1, c, -, 3, 128, 43690, 8, 0, 0, 0, 0, 0, 0,5621000
 
 COL CW16
-bench, mem, temp, enabled_col_num, row_size, row_count, col_width, cycles, l1_references, l1_refills, l2_
-references, l2_refills, inst_retired
-q1, c, -, 3, 256, 43690, 4, 0, 0, 0, 0, 0, 0,5566000
-q1, c, -, 3, 256, 43690, 4, 0, 0, 0, 0, 0, 0,5636000
+bench, mem, temp, enabled_col_num, row_size, row_count, col_width, cycles, l1_references, l1_refills, l2_references, l2_refills, inst_retired
+q1, c, -, 3, 256, 43690, 16, 0, 0, 0, 0, 0, 0,5720000
+q1, c, -, 3, 256, 43690, 16, 0, 0, 0, 0, 0, 0,5694000
+
 
 
 ROW CW1
-bench, mem, temp, enabled_col_num, row_size, row_count, col_width, cycles, l1_references, l1_refills, l2_references, l2_refills, inst_retired
-q1, r, c, 3, 16, 43690, 4, 0, 0, 0, 0, 0, 0,4575000
-q1, r, h, 3, 16, 43690, 4, 0, 0, 0, 0, 0, 0,4587000
-q1, d, -, 3, 16, 43690, 4, 0, 0, 0, 0, 0, 0,4297000
-q1, c, -, 3, 16, 43690, 4, 0, 0, 0, 0, 0, 0,5401000
+bench, mem, temp, enabled_col_num, row_size, row_count, col_width, cycles, l1_references, l1_refills, l2_
+references, l2_refills, inst_retired
+q1, r, c, 3, 16, 43690, 1, 0, 0, 0, 0, 0, 0,96319000
+q1, r, h, 3, 16, 43690, 1, 0, 0, 0, 0, 0, 0,96221000
+q1, d, -, 3, 16, 43690, 1, 0, 0, 0, 0, 0, 0,4269000
+q1, c, -, 3, 16, 43690, 1, 0, 0, 0, 0, 0, 0,5302000
+
 
 
 ROW CW2
 bench, mem, temp, enabled_col_num, row_size, row_count, col_width, cycles, l1_references, l1_refills, l2_
 references, l2_refills, inst_retired
-q1, r, c, 3, 32, 43690, 4, 0, 0, 0, 0, 0, 0,4584000
-q1, r, h, 3, 32, 43690, 4, 0, 0, 0, 0, 0, 0,4569000
-q1, d, -, 3, 32, 43690, 4, 0, 0, 0, 0, 0, 0,4790000
-q1, c, -, 3, 32, 43690, 4, 0, 0, 0, 0, 0, 0,5514000
+q1, r, c, 3, 32, 43690, 2, 0, 0, 0, 0, 0, 0,65956000
+q1, r, h, 3, 32, 43690, 2, 0, 0, 0, 0, 0, 0,65909000
+q1, d, -, 3, 32, 43690, 2, 0, 0, 0, 0, 0, 0,4702000
+q1, c, -, 3, 32, 43690, 2, 0, 0, 0, 0, 0, 0,5371000
 
 ROW CW4
 bench, mem, temp, enabled_col_num, row_size, row_count, col_width, cycles, l1_references, l1_refills, l2_
