@@ -47,6 +47,7 @@ struct _config_db {
     unsigned int   max;
     bool           mvcc_enabled;
     bool           load_file;
+    unsigned int column_width;
 };
 
 struct _config_query {

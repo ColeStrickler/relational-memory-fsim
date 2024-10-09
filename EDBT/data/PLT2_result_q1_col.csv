@@ -1,0 +1,5 @@
+bench, mem, temp, enabled_col_num, row_size, row_count, col_width, cycles, l1_references, l1_refills, l2_references, l2_refills, inst_retired
+q1, r, c, 3, 128, 43690, 4, 0, 0, 0, 0, 0, 0,658582
+q1, r, h, 3, 128, 43690, 4, 0, 0, 0, 0, 0, 0,512011
+q1, d, -, 3, 128, 43690, 4, 0, 0, 0, 0, 0, 0,127703
+q1, c, -, 3, 128, 43690, 4, 0, 0, 0, 0, 0, 0,227895

@@ -1,1 +1,3 @@
 - commented out dsb 15 instruction in db_relcache.c lines 42,47
+- added automatic returns to performance counter measurements until we can get them running
+- changed mmap calls to only be malloc'd once on DB creation

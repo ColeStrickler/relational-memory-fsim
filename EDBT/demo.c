@@ -19,6 +19,7 @@ int open_fd() {
 
 FILE* open_file(const char *filename, const char *mode) {
     FILE *file = fopen(filename, mode);
+    printf("file: %s\n", filename);
     if (!file) {
         perror("Error opening file");
         exit(EXIT_FAILURE); // or return NULL and handle it in the caller
@@ -33,7 +34,7 @@ void setup(int argc, char **argv, char *query_name, struct _config_db *config_db
 
     parse_args(argc, argv, config_db, exp_args, config_query);
     
-    if (config_db->load_file == true && access("config", F_OK) != -1) {
+    if (config_db->load_file == true && access("./config", F_OK) != -1) {
         printf("Loading database configuration from the config file\n");
         parse_config_file(config_db, exp_args); // Load from the specified config file
     } else {

@@ -41,7 +41,7 @@ void parse_args(int argc, char **argv, struct _config_db *config_db, struct expe
         switch (opt) {
             case 'C': {                
                 config_db->num_columns = atoi(optarg);
-                config_db->row_size = config_db->num_columns * COLUMN_WIDTH;
+                config_db->row_size = config_db->num_columns * config_db->column_width;
                 break;
             }
             case 'R': {
@@ -98,7 +98,7 @@ void parse_args(int argc, char **argv, struct _config_db *config_db, struct expe
 }
 
 void parse_config_file(struct _config_db *config_db, struct experiment_config *exp_config) {
-    FILE *file = fopen("config", "r");
+    FILE *file = fopen("./config", "r");
     if (!file) {
         perror("Error opening file");
         return;
@@ -110,7 +110,7 @@ void parse_config_file(struct _config_db *config_db, struct experiment_config *e
             sscanf(line, "row_count = %u", &config_db->row_count);
         } else if (strstr(line, "num_columns")) {
             sscanf(line, "num_columns = %u", &config_db->num_columns);
-            config_db->row_size = config_db->num_columns * COLUMN_WIDTH;
+            config_db->row_size = config_db->num_columns * config_db->column_width;
         } else if (strstr(line, "store_type")) {
             sscanf(line, "store_type = %c", &config_db->store_type);
         } else if (strstr(line, "column_type")) {
@@ -131,6 +131,8 @@ void parse_config_file(struct _config_db *config_db, struct experiment_config *e
             sscanf(line, "r_col = %u", &exp_config->r_col);
         } else if (strstr(line, "num_samples")) {
             sscanf(line, "num_samples = %u", &exp_config->num_samples);
+        } else if (strstr(line, "column_width")) {
+            sscanf(line, "column_width = %u", &config_db->column_width);
         }
         // Add more settings here if needed
     }

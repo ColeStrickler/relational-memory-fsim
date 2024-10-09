@@ -1,7 +1,7 @@
 #define _GNU_SOURCE
 #include "exp_header.h"
 #include "performance_counters.h"
-
+extern unsigned char* db_mapping;
 void run_query2(struct _config_db config_db, struct _config_query params){    
 
     unsigned int cycleHi    = 0, cycleLo=0;
@@ -27,10 +27,11 @@ void run_query2(struct _config_db config_db, struct _config_query params){
         perror("Issue opening PMC FDs\n");
 
     //mapping fpga:
-    unsigned char* plim = mmap((void*)0, RELCACHE_SIZE, PROT_EXEC|PROT_READ|PROT_WRITE, MAP_SHARED|0x40, hpm_fd, RELCACHE_ADDR);
+    //unsigned char* plim = mmap((void*)0, RELCACHE_SIZE, PROT_EXEC|PROT_READ|PROT_WRITE, MAP_SHARED|0x40, hpm_fd, RELCACHE_ADDR);
     //mapping dram
-    unsigned char* dram = mmap((void*)0, dram_size, PROT_EXEC|PROT_READ|PROT_WRITE, MAP_SHARED|0x40, dram_fd, DRAM_ADDR);
-
+    //unsigned char* dram = mmap((void*)0, dram_size, PROT_EXEC|PROT_READ|PROT_WRITE, MAP_SHARED|0x40, dram_fd, DRAM_ADDR);
+    unsigned char* plim = db_mapping;
+    unsigned char* dram = db_mapping;
     unsigned int data_count = 0;
 
     unsigned rme_row_size = 0;
@@ -52,7 +53,7 @@ void run_query2(struct _config_db config_db, struct _config_query params){
         //magic_timing_end(&cycleLo, &cycleHi);
         pmcs_get_value(&end);
         res = pmcs_diff(&end, &start);
-        fprintf(params.output_file,"q2, r, c, %d, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu\n", params.enabled_column_number, config_db.row_size, config_db.row_count, config_db.column_widths[0], cycleLo, res.l1_references, res.l1_refills, res.l2_references, res.l2_refills, res.inst_retired);
+        fprintf(params.output_file,"q2, r, c, %d, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu,%llu\n", params.enabled_column_number, config_db.row_size, config_db.row_count, config_db.column_widths[0], cycleLo, res.l1_references, res.l1_refills, res.l2_references, res.l2_refills, res.inst_retired, res.time.tv_sec*1000000000L+res.time.tv_nsec);
         
         data_count = 0;
         pmcs_get_value(&start);
@@ -67,7 +68,7 @@ void run_query2(struct _config_db config_db, struct _config_query params){
         //magic_timing_end(&cycleLo, &cycleHi);
         pmcs_get_value(&end);
         res = pmcs_diff(&end, &start);
-        fprintf(params.output_file,"q2, r, h, %d, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu\n", params.enabled_column_number, config_db.row_size, config_db.row_count, config_db.column_widths[0], cycleLo, res.l1_references, res.l1_refills, res.l2_references, res.l2_refills, res.inst_retired);
+        fprintf(params.output_file,"q2, r, h, %d, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu,%llu\n", params.enabled_column_number, config_db.row_size, config_db.row_count, config_db.column_widths[0], cycleLo, res.l1_references, res.l1_refills, res.l2_references, res.l2_refills, res.inst_retired, res.time.tv_sec*1000000000L+res.time.tv_nsec);
         
         data_count = 0;
         pmcs_get_value(&start);
@@ -83,7 +84,7 @@ void run_query2(struct _config_db config_db, struct _config_query params){
         //magic_timing_end(&cycleLo, &cycleHi);
         pmcs_get_value(&end);
         res = pmcs_diff(&end, &start);
-        fprintf(params.output_file,"q2, d, -, %d, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu\n", params.enabled_column_number, config_db.row_size, config_db.row_count, config_db.column_widths[0], cycleLo, res.l1_references, res.l1_refills, res.l2_references, res.l2_refills, res.inst_retired);
+        fprintf(params.output_file,"q2, d, -, %d, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu,%llu\n", params.enabled_column_number, config_db.row_size, config_db.row_count, config_db.column_widths[0], cycleLo, res.l1_references, res.l1_refills, res.l2_references, res.l2_refills, res.inst_retired, res.time.tv_sec*1000000000L+res.time.tv_nsec);
 
         if (config_db.print == true){
             printf("\nQuery results:\n");
@@ -118,14 +119,14 @@ void run_query2(struct _config_db config_db, struct _config_query params){
     	//magic_timing_end(&cycleLo, &cycleHi);
     	pmcs_get_value(&end);
     	res = pmcs_diff(&end, &start);
-    	fprintf(params.output_file,"q2, c, -, %d, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu\n", params.enabled_column_number, config_db.row_size, config_db.row_count, config_db.column_widths[0], cycleLo, res.l1_references, res.l1_refills, res.l2_references, res.l2_refills, res.inst_retired);
+    	fprintf(params.output_file,"q2, c, -, %d, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu,%llu\n", params.enabled_column_number, config_db.row_size, config_db.row_count, config_db.column_widths[0], cycleLo, res.l1_references, res.l1_refills, res.l2_references, res.l2_refills, res.inst_retired, res.time.tv_sec*1000000000L+res.time.tv_nsec);
         free(col_array);
     }
 
     fflush(params.output_file);
 
-    munmap(plim, RELCACHE_SIZE);
-    munmap(dram, dram_size);
+    //munmap(plim, RELCACHE_SIZE);
+    //munmap(dram, dram_size);
 
     close(hpm_fd);
     close(dram_fd);

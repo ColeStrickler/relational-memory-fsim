@@ -20,7 +20,7 @@
 
 
 #define HIGH_DDR_ADDR 0x800000000
-
+unsigned char* db_mapping = NULL;
 #define BUS_WIDTH      16
 
 unsigned int get_uniform(unsigned int rangeLow, unsigned int rangeHigh) {
@@ -52,8 +52,15 @@ void generate_db(struct _config_db config) {
     // #endif
 
     int hpm_fd = open_fd();
-    unsigned char* db = mmap((void*)0, db_size, PROT_EXEC|PROT_READ|PROT_WRITE, MAP_SHARED, hpm_fd, HIGH_DDR_ADDR); //Uncached mapping
+    //unsigned char* db = mmap((void*)0, db_size, PROT_EXEC|PROT_READ|PROT_WRITE, MAP_SHARED, hpm_fd, HIGH_DDR_ADDR); //Uncached mapping
+    unsigned char* db = malloc(db_size);
 
+    db_mapping = db;
+    if (db == NULL)
+    {
+        printf("generate_db() malloc failed\n");
+        return;
+    }
     for (int i = 0; i < db_size; i++) {
         db[i] = 0;            
     }
@@ -141,11 +148,11 @@ void generate_db(struct _config_db config) {
     if (config.print == true) {
         print_db(config, db, row_size);
     }
-    if (munmap(db, db_size) == -1) {
-    perror("Error unmapping the memory");
+    //if (munmap(db, db_size) == -1) {
+    //perror("Error unmapping the memory");
     // Handle the error as appropriate
-    }
-
+    //}
+    //free()
 }
 
 

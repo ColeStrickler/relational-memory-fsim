@@ -1,4 +1,5 @@
 # General database and experiment settings
+column_width = 8
 row_count = 43690
 num_columns = 16
 store_type = r
@@ -11,4 +12,3 @@ print = false
 # General experiment settings
 r_col = 4
 num_samples = 1
-
