@@ -9,7 +9,15 @@
 #include <linux/perf_event.h>
 #include <sys/syscall.h>
 #include <unistd.h>
+#include <stdint.h>
 #include "../include/performance_counters.h"
+
+#if !defined(__x86_64__) && !defined(__i386__)
+#define read_csr_safe(reg) ({ register long __tmp asm("a0"); \
+        asm volatile ("csrr %0, " #reg : "=r"(__tmp)); \
+        __tmp; })
+#endif
+
 
 /// System-call number to open performance counter event.
 #define __NR_perf_event_open 241
@@ -157,6 +165,16 @@ int teardown_pmcs(void)
 	return 0;
 }
 
+#if defined(__x86_64__) || defined(__i386__)
+uint64_t rdtsc() {
+    unsigned int lo, hi;
+    __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
+    return ((uint64_t)hi << 32) | lo;
+}                   
+#endif
+
+
+
 /** @brief Read performance counters value.
  * @return struct perf_countrers.
  */
@@ -169,6 +187,14 @@ void pmcs_get_value(struct perf_counters* res)
 		res->l2_references = 0;
 		res->l2_refills = 0;
 		res->inst_retired = 0;
+		
+		//res->inst_retired = read_csr_safe(instret);
+		#if defined(__x86_64__) || defined(__i386__)
+			res->cycles = rdtsc();
+		#else
+			res->cycles = read_csr_safe(cycle);
+		#endif
+		
 		clock_gettime(CLOCK_MONOTONIC, &res->time);
 		return;
 	}
@@ -194,6 +220,7 @@ struct perf_counters pmcs_diff(struct perf_counters* a, struct perf_counters* b)
 	res.l2_references = a->l2_references - b->l2_references;
 	res.l2_refills = a->l2_refills - b->l2_refills;
     res.inst_retired = a->inst_retired - b->inst_retired;
+	res.cycles = a->cycles - b->cycles;
 	res.time.tv_sec = (a->time.tv_sec - b->time.tv_sec);
 	res.time.tv_nsec = (a->time.tv_nsec - b->time.tv_nsec);
     return res;

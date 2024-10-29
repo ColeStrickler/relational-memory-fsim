@@ -53,12 +53,57 @@ void generate_db(struct _config_db config) {
 
     int hpm_fd = open_fd();
     //unsigned char* db = mmap((void*)0, db_size, PROT_EXEC|PROT_READ|PROT_WRITE, MAP_SHARED, hpm_fd, HIGH_DDR_ADDR); //Uncached mapping
+    //unsigned char* db = malloc(db_size); // NEED TO MMAP THIS, MAKE CONTIGUOUS
+    
+    #ifdef USE_MALLOC
+    // Code for non-x86 architectures
+     printf("using malloc\n");
     unsigned char* db = malloc(db_size);
+                               
+    #elif !defined(__x86_64__) && !defined(__i386__)
+    
+    unsigned char* db = mmap(0, 
+				       db_size,
+				       PROT_READ | PROT_WRITE | PROT_EXEC, 
+				       MAP_SHARED, 
+				       hpm_fd, 0xf0000000);
+
+    #else
+    // Code for x86 architectures
+    printf("using malloc\n");
+    unsigned char* db = malloc(db_size);
+    
+    #endif
+    
+    /*
+        reserved-memory {
+            #address-cells = <2>;
+            #size-cells = <2>;
+            ranges;
+
+            my_reserved_memory: memory@f0000000 {
+                reg = <0x0 0xf0000000 0x0 0x01000000>;  // Example: 16MB region at address 0x80000000
+                no-map;  // Optional: Prevent the memory region from being mapped by the kernel
+            };
+        }; 
+
+        cat /proc/iomem
+        10015000-10015fff : 10015000.blkdev-controller control
+        54000000-54000fff : 54000000.serial control
+        80000000-8003ffff : Reserved
+        80200000-17fffffff : System RAM
+        80202000-813546a7 : Kernel image
+        80202000-808e7acd : Kernel code
+        80e00000-80ffffff : Kernel rodata
+        81200000-812e35ff : Kernel data
+        812e4000-813546a7 : Kernel bss
+    */
+
 
     db_mapping = db;
     if (db == NULL)
     {
-        printf("generate_db() malloc failed\n");
+        printf("generate_db() mmmap failed\n");
         return;
     }
     for (int i = 0; i < db_size; i++) {

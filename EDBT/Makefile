@@ -28,8 +28,12 @@ all2: clean $(SOURCES)
 	$(CC2) $(CFLAGS) $(SOURCES) -o $(OUTPUT)
 
 
+all3: $(SOURCES)
+	$(CC) $(CFLAGS) $(SOURCES) -DUSE_MALLOC -o new_demo_malloc
+
+
 clean:
-	rm -f $(OUTPUT) *.o
+	rm -f $(OUTPUT) *.o test_counters
 
 test:
 	$(CC) $(CFLAGS) $(UTILS_DIR)/test_counters.c -o test_counters

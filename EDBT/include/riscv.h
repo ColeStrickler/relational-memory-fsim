@@ -1,8 +1,8 @@
 #ifndef RISCV_H
 #define RISCV_H
-#include <stdint.h>
-//#define mcounteren  0x0306
-//#define scounteren  0x0106
+
+#define mcounteren  0x0306
+#define scounteren  0x0106
 
 #define mhpmevent3  0x0323
 #define mhpmevent4  0x0324

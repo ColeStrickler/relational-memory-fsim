@@ -12,14 +12,25 @@ void enable_perf()
 #define read_csr_safe(reg) ({ register long __tmp asm("a0"); \
         asm volatile ("csrr %0, " #reg : "=r"(__tmp)); \
         __tmp; })
+#define write_csr(reg, val) ({ \
+        asm volatile ("csrw " #reg ", %0" :: "rK"(val)); })
+
+
+#define HPM_SETUP_EVENTS(name, eventset, events) ({ \
+            write_csr(name, ((events << 8) | eventset)); \
+        })
+
+
+uint64_t read_cycle() {
+    uint64_t cycle_count;
+    asm volatile ("csrr %0, cycle" : "=r"(cycle_count));
+    return cycle_count;
+}
+
 
 int main()
 {
     //enable_perf();
-    //uint64_t scount = read_csr_safe(scounteren);
-    //uint64_t mcount = read_csr_safe(mcounteren);
-    //printf("perf enabled %llu -- %llu\n", scount, mcount);
-    uint64_t cycle_start = read_csr_safe(cycle);
     uint64_t inst_start = read_csr_safe(instret);
     int x = 0;
     for (int i = 0; i < 100; i++)
@@ -29,6 +40,7 @@ int main()
     uint64_t inst_end = read_csr_safe(instret);
     uint64_t cycle_end = read_csr_safe(cycle);
 
+
     printf("Cycle count: %llu\n", cycle_end-cycle_start);
-    printf("Instructions retired: %llu\n", inst_start-inst_end);
+    printf("Instructions retired: %llu\n", inst_end-inst_start);
 }

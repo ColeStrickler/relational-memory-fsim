@@ -1,6 +1,6 @@
 # General database and experiment settings
-column_width = 8
-row_count = 43690
+column_width = 4
+row_count = 436900
 num_columns = 16
 store_type = r
 column_type = r
