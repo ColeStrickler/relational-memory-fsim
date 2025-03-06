@@ -33,7 +33,7 @@ void setup(int argc, char **argv, char *query_name, struct _config_db *config_db
 
     parse_args(argc, argv, config_db, exp_args, config_query);
     
-    if (config_db->load_file == true && access("config", F_OK) != -1) {
+    if (config_db->load_file == true && access("./config", F_OK) != -1) {
         printf("Loading database configuration from the config file\n");
         parse_config_file(config_db, exp_args); // Load from the specified config file
     } else {
@@ -88,14 +88,14 @@ void run_query(struct _config_db *config_db, struct _config_query* query_config,
 }
 
 void flush_cache() {
-    char *array = malloc(SIZE);
+    char *array = malloc(2*SIZE);
 
     if (array == NULL) {
         fprintf(stderr, "Memory allocation failed\n");
     }
-    memset(array, 0, SIZE);
+    memset(array, 0, 2*SIZE);
 
-    for (int i = 0; i < SIZE; ++i) {
+    for (int i = 0; i <2*SIZE; ++i) {
         char value = array[i];
     }
     free(array);

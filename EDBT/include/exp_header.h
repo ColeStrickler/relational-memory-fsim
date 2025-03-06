@@ -7,6 +7,9 @@ void generate_db(struct _config_db config);
 int configure_relcache(struct _config_db config, struct _config_query *params);
 void call_db_reset_relcache(int value);
 int reset_relcache(unsigned int frame_offset);
+int EnableRelCache();
+void FlushAndDisable();
+
 
 void run_query(struct _config_db *config_db, struct _config_query* query_config, QueryFunction query_func);
 void run_query2(struct _config_db config_db, struct _config_query params);

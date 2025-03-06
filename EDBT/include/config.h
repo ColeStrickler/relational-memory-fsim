@@ -15,14 +15,27 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#define WRITE_BOOL(addr, value)(*(bool*)(addr) = value)
+#define WRITE_UINT8(addr, value)(*(uint8_t*)(addr) = value)
+#define WRITE_UINT16(addr, value)(*(uint16_t*)(addr) = value)
+#define WRITE_UINT32(addr, value)(*(uint32_t*)(addr) = value)
+#define WRITE_UINT64(addr, value)(*(uint64_t*)(addr) = value)
+
+#define READ_BOOL(addr)(*(bool*)(addr))
+#define READ_UINT8(addr)(*(uint8_t*)(addr))
+#define READ_UINT16(addr)(*(uint16_t*)(addr))
+#define READ_UINT32(addr)(*(uint32_t*)(addr))
+#define READ_UINT64(addr)(*(uint64_t*)(addr))
+
+
 #define CL_SIZE        64
 
 #define K              1000
 #define KB             1024
 #define MB             1024*KB
 
-#define RELCACHE_ADDR  0x1000000000UL
-#define RELCACHE_SIZE  2*MB
+#define RELCACHE_ADDR  0x110000000UL
+#define RELCACHE_SIZE  0x00fffffffUL
 #define DRAM_ADDR      0x800000000UL
 #define OCM_ADDR       0x00FFFC0000
 #define OCM_SIZE       256*KB
@@ -30,7 +43,7 @@
 #define    LPD0_SIZE  4*KB
 #define    LPD0_ADDR  0x80000000
 
-#define T    unsigned int
+#define T unsigned char
 #define MAX_GROUPS 11
 #define SIZE (1024 * 1024) // 1MB
 #define COLUMN_WIDTH 4
@@ -47,6 +60,7 @@ struct _config_db {
     unsigned int   max;
     bool           mvcc_enabled;
     bool           load_file;
+    unsigned int column_width;
 };
 
 struct _config_query {
@@ -77,4 +91,6 @@ struct _config {
 
 int open_fd();
 void flush_cache();
+
+
 #endif // CONFIG_H

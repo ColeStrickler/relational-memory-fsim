@@ -74,6 +74,7 @@ static int inst_retired_fd;
  */
 static int open_pmc_fd(unsigned int pmc_type, int group_fd)
 {
+	return 0;
 	static struct perf_event_attr attr;
 	attr.type = PERF_TYPE_RAW;
 	attr.config = pmc_type;
@@ -96,6 +97,7 @@ static int open_pmc_fd(unsigned int pmc_type, int group_fd)
  */
 int setup_pmcs(void)
 {
+	return 0;
 	l1_references_fd = open_pmc_fd(L1_REFERENCES, -1);
     if (l1_references_fd == -1)
         return -1;
@@ -122,6 +124,7 @@ int setup_pmcs(void)
  */
 static inline int close_pmc_fd(int fd)
 {
+	return 0;
 	int ret = close(fd);
 	if (ret == -1) {
 		perror("Could not close fd for performance counter\n");
@@ -134,6 +137,7 @@ static inline int close_pmc_fd(int fd)
  */
 int teardown_pmcs(void)
 {
+	return 0;
 	int ret = 0;
 	ret = close_pmc_fd(l1_references_fd);
 	if (ret == -1)
@@ -152,6 +156,13 @@ int teardown_pmcs(void)
         return ret;
 	return 0;
 }
+#include <stdint.h>
+uint64_t read_cycle() {
+    uint64_t cycle_count;
+    asm volatile ("csrr %0, cycle" : "=r"(cycle_count));
+    return cycle_count;
+}
+
 
 /** @brief Read performance counters value.
  * @return struct perf_countrers.
@@ -159,15 +170,17 @@ int teardown_pmcs(void)
 void pmcs_get_value(struct perf_counters* res)
 {
 	struct read_format measurement;
-	size_t size = read(l1_references_fd, &measurement, sizeof(struct read_format));
-	if (size != sizeof(struct read_format)) {
-		perror("Error: Size read from performance counters differ from size expected.");
-	}
-	res->l1_references = measurement.l1_references.value;
-	res->l1_refills = measurement.l1_refills.value;
-	res->l2_references = measurement.l2_references.value;
-	res->l2_refills = measurement.l2_refills.value;
-    res->inst_retired = measurement.inst_retired.value;
+	//size_t size = read(l1_references_fd, &measurement, sizeof(struct read_format));
+	//if (size != sizeof(struct read_format)) {
+	//	perror("Error: Size read from performance counters differ from size expected.");
+	//}
+	res->l1_references = 0; measurement.l1_references.value;
+	res->l1_refills = 0; measurement.l1_refills.value;
+	res->l2_references = 0; measurement.l2_references.value;
+	res->l2_refills = 0; measurement.l2_refills.value;
+    res->inst_retired = 0; measurement.inst_retired.value;
+	res->cycles = read_cycle();
+	clock_gettime(CLOCK_MONOTONIC, &res->time);
 }
 
 struct perf_counters pmcs_diff(struct perf_counters* a, struct perf_counters* b)
@@ -178,5 +191,10 @@ struct perf_counters pmcs_diff(struct perf_counters* a, struct perf_counters* b)
 	res.l2_references = a->l2_references - b->l2_references;
 	res.l2_refills = a->l2_refills - b->l2_refills;
     res.inst_retired = a->inst_retired - b->inst_retired;
+	res.cycles = a->cycles - b->cycles;
+	res.time.tv_sec = (a->time.tv_sec - b->time.tv_sec);
+	res.time.tv_nsec = (a->time.tv_nsec - b->time.tv_nsec);
+
+
     return res;
 }

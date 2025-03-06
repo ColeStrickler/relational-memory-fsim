@@ -31,9 +31,9 @@ void run_query4(struct _config_db config_db, struct _config_query params){
         perror("Issue opening PMC FDs\n");
 
     //mapping fpga:
-    T* plim = mmap((void*)0, RELCACHE_SIZE, PROT_EXEC|PROT_READ|PROT_WRITE, MAP_SHARED|0x40, hpm_fd, RELCACHE_ADDR);
+    T* plim = mmap((void*)0, RELCACHE_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, hpm_fd, RELCACHE_ADDR);
     //mapping dram
-    T* dram = mmap((void*)0, dram_size, PROT_EXEC|PROT_READ|PROT_WRITE, MAP_SHARED|0x40, dram_fd, DRAM_ADDR);
+    T* dram = plim;//mmap((void*)0, dram_size, PROT_READ|PROT_WRITE, MAP_SHARED, dram_fd, DRAM_ADDR);
 
     if ( config_db.store_type == 'r' ){
     T* plim_group_array = NULL;
@@ -47,8 +47,9 @@ void run_query4(struct _config_db config_db, struct _config_query params){
     T plim_average = 0;
     int plim_repetition = 0;
     
+    EnableRelCache();
     pmcs_get_value(&start);
-    magic_timing_begin(&cycleLo, &cycleHi);
+  //  magic_timing_begin(&cycleLo, &cycleHi);
     for(int i = 0; i < config_db.row_count; i++){
       if (plim[i*params.enabled_column_number + 2] > k) {
         if(!already_grouped((plim[i*params.enabled_column_number+1]&((T)0xFF)), plim_group_array_counter, plim_group_array)) {
@@ -79,7 +80,7 @@ void run_query4(struct _config_db config_db, struct _config_query params){
         }
       }
     }
-    magic_timing_end(&cycleLo, &cycleHi);
+   // magic_timing_end(&cycleLo, &cycleHi);
     pmcs_get_value(&end);
     res = pmcs_diff(&end, &start);
     fprintf(params.output_file,"q4, r, c, %d, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu\n", params.enabled_column_number, config_db.row_size, config_db.row_count, config_db.column_widths[0], cycleLo, res.l1_references, res.l1_refills, res.l2_references, res.l2_refills, res.inst_retired);
@@ -95,45 +96,47 @@ void run_query4(struct _config_db config_db, struct _config_query params){
     plim_group_array_counter = 0;
     plim_average = 0;
     plim_repetition = 0;
+
+    FlushAndDisable();
     
-    // start RME hot
-    pmcs_get_value(&start);
-    magic_timing_begin(&cycleLo, &cycleHi);
-    for(int i = 0; i < config_db.row_count; i++){
-      if (plim[i*params.enabled_column_number + 2] > k) {
-        if(!already_grouped((plim[i*params.enabled_column_number+1]&((T)0xFF)), plim_group_array_counter, plim_group_array)) {
-            // Check if a resize is needed before insertion
-            if (plim_group_array_counter >= plim_group_array_capacity) {
-                plim_group_array_capacity *= 2;  // double the capacity
-                plim_group_array = (T*)realloc(plim_group_array, plim_group_array_capacity * sizeof(T));
-                if (!plim_group_array) {
-                    fprintf(stderr, "Memory reallocation failed!\n");
-                    exit(EXIT_FAILURE);
-                }
-            }
-            
-            plim_group_array[plim_group_array_counter++] = (plim[i*params.enabled_column_number+1]&((T)0xFF));
-            plim_repetition = 1;
-            plim_average = plim[i*params.enabled_column_number];
-            
-            for(int j = i+1; j < config_db.row_count; j++){
-              if(plim[j*params.enabled_column_number+2] > k){
-                if(plim[j*params.enabled_column_number+1] == plim[i*params.enabled_column_number+1]){
-                  plim_repetition++;
-                  plim_average += plim[j*params.enabled_column_number];
-                }
-              }
-            }
-            plim_average /= plim_repetition;
-            //printf("rme hot Group Average: %u\n", (plim[i*params.enabled_column_number+1]&((T)0xFF)), plim_average);
-        }
-      }
-    }
-    magic_timing_end(&cycleLo, &cycleHi);
-    pmcs_get_value(&end);
-    res = pmcs_diff(&end, &start);
-    fprintf(params.output_file,"q4, r, h, %d, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu\n", params.enabled_column_number, config_db.row_size, config_db.row_count, config_db.column_widths[0], cycleLo, res.l1_references, res.l1_refills, res.l2_references, res.l2_refills, res.inst_retired);
-    free(plim_group_array);
+    //// start RME hot
+    //pmcs_get_value(&start);
+    //// magic_timing_begin(&cycleLo, &cycleHi);
+    //for(int i = 0; i < config_db.row_count; i++){
+    //  if (plim[i*params.enabled_column_number + 2] > k) {
+    //    if(!already_grouped((plim[i*params.enabled_column_number+1]&((T)0xFF)), plim_group_array_counter, plim_group_array)) {
+    //        // Check if a resize is needed before insertion
+    //        if (plim_group_array_counter >= plim_group_array_capacity) {
+    //            plim_group_array_capacity *= 2;  // double the capacity
+    //            plim_group_array = (T*)realloc(plim_group_array, plim_group_array_capacity * sizeof(T));
+    //            if (!plim_group_array) {
+    //                fprintf(stderr, "Memory reallocation failed!\n");
+    //                exit(EXIT_FAILURE);
+    //            }
+    //        }
+    //        
+    //        plim_group_array[plim_group_array_counter++] = (plim[i*params.enabled_column_number+1]&((T)0xFF));
+    //        plim_repetition = 1;
+    //        plim_average = plim[i*params.enabled_column_number];
+    //        
+    //        for(int j = i+1; j < config_db.row_count; j++){
+    //          if(plim[j*params.enabled_column_number+2] > k){
+    //            if(plim[j*params.enabled_column_number+1] == plim[i*params.enabled_column_number+1]){
+    //              plim_repetition++;
+    //              plim_average += plim[j*params.enabled_column_number];
+    //            }
+    //          }
+    //        }
+    //        plim_average /= plim_repetition;
+    //        //printf("rme hot Group Average: %u\n", (plim[i*params.enabled_column_number+1]&((T)0xFF)), plim_average);
+    //    }
+    //  }
+    //}
+    //// magic_timing_end(&cycleLo, &cycleHi);
+    //pmcs_get_value(&end);
+    //res = pmcs_diff(&end, &start);
+    //fprintf(params.output_file,"q4, r, h, %d, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu\n", params.enabled_column_number, config_db.row_size, config_db.row_count, config_db.column_widths[0], cycleLo, res.l1_references, res.l1_refills, res.l2_references, res.l2_refills, res.inst_retired);
+    //free(plim_group_array);
 
     // start DRAM
     T* dram_group_array = NULL;
@@ -148,7 +151,7 @@ void run_query4(struct _config_db config_db, struct _config_query params){
     plim_repetition = 0;
 
     pmcs_get_value(&start);
-    magic_timing_begin(&cycleLo, &cycleHi);
+   // magic_timing_begin(&cycleLo, &cycleHi);
 
     for(int i = 0; i < config_db.row_count; i++) {
         if (dram[(i*config_db.row_size + params.col_offsets[2])/sizeof(T)] > k) {
@@ -181,7 +184,7 @@ void run_query4(struct _config_db config_db, struct _config_query params){
         }
     }
 
-    magic_timing_end(&cycleLo, &cycleHi);
+   // magic_timing_end(&cycleLo, &cycleHi);
     pmcs_get_value(&end);
     res = pmcs_diff(&end, &start);
     fprintf(params.output_file,"q4, d, -, %d, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu\n", params.enabled_column_number, config_db.row_size, config_db.row_count, config_db.column_widths[0], cycleLo, res.l1_references, res.l1_refills, res.l2_references, res.l2_refills, res.inst_retired);
@@ -203,7 +206,7 @@ void run_query4(struct _config_db config_db, struct _config_query params){
     int plim_repetition = 0;
 
     pmcs_get_value(&start);
-    magic_timing_begin(&cycleLo, &cycleHi);
+  //  magic_timing_begin(&cycleLo, &cycleHi);
 
     for(int i = 0; i < config_db.row_count; i++) {
         if (dram[(i + config_db.row_count * (params.col_offsets[2])/sizeof(T))] > k) {
@@ -236,7 +239,7 @@ void run_query4(struct _config_db config_db, struct _config_query params){
         }
     }
 
-    magic_timing_end(&cycleLo, &cycleHi);
+   // magic_timing_end(&cycleLo, &cycleHi);
     pmcs_get_value(&end);
     res = pmcs_diff(&end, &start);
     fprintf(params.output_file,"q4, c, -, %d, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu\n", params.enabled_column_number, config_db.row_size, config_db.row_count, config_db.column_widths[0], cycleLo, res.l1_references, res.l1_refills, res.l2_references, res.l2_refills, res.inst_retired);

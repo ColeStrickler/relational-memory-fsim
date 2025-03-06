@@ -5,7 +5,7 @@
  */
 #ifndef PERFORMANCE_COUNTERS_H
 #define PERFORMANCE_COUNTERS_H
-
+#include <time.h>
 #define magic_timing_begin(cycleLo, cycleHi){\
   *cycleHi=0;\
   asm volatile("mrs %0, CNTVCT_EL0": "=r"(*cycleLo) );\
@@ -28,6 +28,8 @@ struct perf_counters {
         long unsigned l2_references; ///< L2 accesses
         long unsigned l2_refills; ///< L2 misses
         long unsigned inst_retired; ///< Instructions retired
+        long unsigned cycles;
+        struct timespec time;
 };
 
 /** @brief Enable user-space access to performance counters.

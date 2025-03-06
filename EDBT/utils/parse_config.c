@@ -110,8 +110,11 @@ void parse_config_file(struct _config_db *config_db, struct experiment_config *e
             sscanf(line, "row_count = %u", &config_db->row_count);
         } else if (strstr(line, "num_columns")) {
             sscanf(line, "num_columns = %u", &config_db->num_columns);
-            config_db->row_size = config_db->num_columns * COLUMN_WIDTH;
-        } else if (strstr(line, "store_type")) {
+        } 
+        else if (strstr(line, "column_width")) {
+            sscanf(line,  "column_width = %u", &config_db->column_width);
+        }
+        else if (strstr(line, "store_type")) {
             sscanf(line, "store_type = %c", &config_db->store_type);
         } else if (strstr(line, "column_type")) {
             sscanf(line, "column_type = %c", &config_db->col_type);
@@ -134,6 +137,10 @@ void parse_config_file(struct _config_db *config_db, struct experiment_config *e
         }
         // Add more settings here if needed
     }
+
+                
+    config_db->row_size = config_db->num_columns * config_db->column_width;
+    printf("row size %d\n", config_db->row_size);
 
     fclose(file);
 }

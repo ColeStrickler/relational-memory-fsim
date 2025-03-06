@@ -1,5 +1,6 @@
 # Define the default C compiler for aarch64
-CC = aarch64-linux-gnu-gcc
+CC = riscv64-unknown-linux-gnu-gcc
+CC2 = aarch64-linux-gnu-gcc
 
 # Define the output name for the compiled program
 OUTPUT = new_demo
@@ -33,6 +34,9 @@ CFLAGS = -I$(INCLUDE_DIR) -lm -O0 -D __aarch64__
 # The default target (typing 'make' will use this target)
 all: $(SOURCES)
 	$(CC) $(CFLAGS) $(SOURCES) -o $(OUTPUT)
+
+all2: clean $(SOURCES)
+	$(CC2) $(CFLAGS) $(SOURCES) -o $(OUTPUT)
 
 # Clean target to remove output and intermediate files
 clean:

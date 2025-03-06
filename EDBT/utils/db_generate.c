@@ -20,6 +20,7 @@
 
 
 #define HIGH_DDR_ADDR 0x800000000
+#define RELMEM_ADDR 0x110000000
 
 #define BUS_WIDTH      16
 
@@ -52,7 +53,7 @@ void generate_db(struct _config_db config) {
     // #endif
 
     int hpm_fd = open_fd();
-    unsigned char* db = mmap((void*)0, db_size, PROT_EXEC|PROT_READ|PROT_WRITE, MAP_SHARED, hpm_fd, HIGH_DDR_ADDR); //Uncached mapping
+    unsigned char* db = mmap((void*)0, db_size, PROT_EXEC|PROT_READ|PROT_WRITE, MAP_SHARED, hpm_fd, RELMEM_ADDR); //Uncached mapping
 
     for (int i = 0; i < db_size; i++) {
         db[i] = 0;            
@@ -145,7 +146,7 @@ void generate_db(struct _config_db config) {
     perror("Error unmapping the memory");
     // Handle the error as appropriate
     }
-
+    printf("generate_db() done\n");
 }
 
 

@@ -27,9 +27,9 @@ void run_query2(struct _config_db config_db, struct _config_query params){
         perror("Issue opening PMC FDs\n");
 
     //mapping fpga:
-    unsigned char* plim = mmap((void*)0, RELCACHE_SIZE, PROT_EXEC|PROT_READ|PROT_WRITE, MAP_SHARED|0x40, hpm_fd, RELCACHE_ADDR);
+    unsigned char* plim = mmap((void*)0, RELCACHE_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, hpm_fd, RELCACHE_ADDR);
     //mapping dram
-    unsigned char* dram = mmap((void*)0, dram_size, PROT_EXEC|PROT_READ|PROT_WRITE, MAP_SHARED|0x40, dram_fd, DRAM_ADDR);
+    unsigned char* dram = plim;//mmap((void*)0, dram_size, PROT_READ|PROT_WRITE, MAP_SHARED, dram_fd, DRAM_ADDR);
 
     unsigned int data_count = 0;
 
@@ -40,8 +40,9 @@ void run_query2(struct _config_db config_db, struct _config_query params){
     }
 
     if ( config_db.store_type == 'r' ){
+        EnableRelCache(hpm_fd);
         pmcs_get_value(&start);
-        magic_timing_begin(&cycleLo, &cycleHi);
+       // magic_timing_begin(&cycleLo, &cycleHi);
         for (int i = 0; i < config_db.row_count; i++) {
             T second_column_value = *(T*)(plim + i * rme_row_size + params.col_offsets[1]);
             if (second_column_value > params.k_value) {
@@ -49,29 +50,29 @@ void run_query2(struct _config_db config_db, struct _config_query params){
                 data_count++;
             }
         }
-        magic_timing_end(&cycleLo, &cycleHi);
+       //magic_timing_end(&cycleLo, &cycleHi);
         pmcs_get_value(&end);
         res = pmcs_diff(&end, &start);
         fprintf(params.output_file,"q2, r, c, %d, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu\n", params.enabled_column_number, config_db.row_size, config_db.row_count, config_db.column_widths[0], cycleLo, res.l1_references, res.l1_refills, res.l2_references, res.l2_refills, res.inst_retired);
+        FlushAndDisable();
+        //data_count = 0;
+        //pmcs_get_value(&start);
+        //// magic_timing_begin(&cycleLo, &cycleHi);
+        //for (int i = 0; i < config_db.row_count; i++) {
+        //    T second_column_value = *(T*)(plim + i * rme_row_size + params.col_offsets[1]);
+        //    if (second_column_value > params.k_value) {
+        //        hot_array[data_count] = *(T*)(plim + i * rme_row_size + params.col_offsets[0]);
+        //        data_count++;
+        //    }
+        //}
+        //// magic_timing_end(&cycleLo, &cycleHi);
+        //pmcs_get_value(&end);
+        //res = pmcs_diff(&end, &start);
+        //fprintf(params.output_file,"q2, r, h, %d, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu\n", params.enabled_column_number, config_db.row_size, config_db.row_count, config_db.column_widths[0], cycleLo, res.l1_references, res.l1_refills, res.l2_references, res.l2_refills, res.inst_retired);
         
         data_count = 0;
         pmcs_get_value(&start);
-        magic_timing_begin(&cycleLo, &cycleHi);
-        for (int i = 0; i < config_db.row_count; i++) {
-            T second_column_value = *(T*)(plim + i * rme_row_size + params.col_offsets[1]);
-            if (second_column_value > params.k_value) {
-                hot_array[data_count] = *(T*)(plim + i * rme_row_size + params.col_offsets[0]);
-                data_count++;
-            }
-        }
-        magic_timing_end(&cycleLo, &cycleHi);
-        pmcs_get_value(&end);
-        res = pmcs_diff(&end, &start);
-        fprintf(params.output_file,"q2, r, h, %d, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu\n", params.enabled_column_number, config_db.row_size, config_db.row_count, config_db.column_widths[0], cycleLo, res.l1_references, res.l1_refills, res.l2_references, res.l2_refills, res.inst_retired);
-        
-        data_count = 0;
-        pmcs_get_value(&start);
-        magic_timing_begin(&cycleLo, &cycleHi);
+       // magic_timing_begin(&cycleLo, &cycleHi);
         for (int i = 0; i < config_db.row_count; i++) {
             T column1_value = *(T*)(dram + i * config_db.row_size + params.col_offsets[1]);
 
@@ -80,7 +81,7 @@ void run_query2(struct _config_db config_db, struct _config_query params){
                 data_count++;
             }
         }
-        magic_timing_end(&cycleLo, &cycleHi);
+       // magic_timing_end(&cycleLo, &cycleHi);
         pmcs_get_value(&end);
         res = pmcs_diff(&end, &start);
         fprintf(params.output_file,"q2, d, -, %d, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu\n", params.enabled_column_number, config_db.row_size, config_db.row_count, config_db.column_widths[0], cycleLo, res.l1_references, res.l1_refills, res.l2_references, res.l2_refills, res.inst_retired);
@@ -104,7 +105,7 @@ void run_query2(struct _config_db config_db, struct _config_query params){
         T *col_array = malloc(config_db.row_count * sizeof(T));
         // Compute the product of row_count and column offset outside the loop
     	pmcs_get_value(&start);
-    	magic_timing_begin(&cycleLo, &cycleHi);
+    	//magic_timing_begin(&cycleLo, &cycleHi);
 
         unsigned int col0_offset_product = config_db.row_count * params.col_offsets[0];
         unsigned int col1_offset_product = config_db.row_count * params.col_offsets[1];
@@ -115,7 +116,7 @@ void run_query2(struct _config_db config_db, struct _config_query params){
                 data_count++;
             }
         }
-    	magic_timing_end(&cycleLo, &cycleHi);
+    	//magic_timing_end(&cycleLo, &cycleHi);
     	pmcs_get_value(&end);
     	res = pmcs_diff(&end, &start);
     	fprintf(params.output_file,"q2, c, -, %d, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu\n", params.enabled_column_number, config_db.row_size, config_db.row_count, config_db.column_widths[0], cycleLo, res.l1_references, res.l1_refills, res.l2_references, res.l2_refills, res.inst_retired);
@@ -125,7 +126,7 @@ void run_query2(struct _config_db config_db, struct _config_query params){
     fflush(params.output_file);
 
     munmap(plim, RELCACHE_SIZE);
-    munmap(dram, dram_size);
+    //munmap(dram, dram_size);
 
     close(hpm_fd);
     close(dram_fd);
