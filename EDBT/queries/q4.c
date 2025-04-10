@@ -31,6 +31,7 @@ void run_query4(struct _config_db config_db, struct _config_query params){
         perror("Issue opening PMC FDs\n");
 
     //mapping fpga:
+    unsigned long *config = mmap(NULL, RME_CONFIG_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, hpm_fd, RME_CONFIG);
     T* plim = mmap((void*)0, RELCACHE_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, hpm_fd, RELCACHE_ADDR);
     //mapping dram
     T* dram = plim;//mmap((void*)0, dram_size, PROT_READ|PROT_WRITE, MAP_SHARED, dram_fd, DRAM_ADDR);
@@ -48,7 +49,9 @@ void run_query4(struct _config_db config_db, struct _config_query params){
     int plim_repetition = 0;
     
     EnableRelCache();
+    get_rme_pmcs(&start, config);
     pmcs_get_value(&start);
+
   //  magic_timing_begin(&cycleLo, &cycleHi);
     for(int i = 0; i < config_db.row_count; i++){
       if (plim[i*params.enabled_column_number + 2] > k) {
@@ -82,9 +85,26 @@ void run_query4(struct _config_db config_db, struct _config_query params){
     }
    // magic_timing_end(&cycleLo, &cycleHi);
     pmcs_get_value(&end);
+    get_rme_pmcs(&end, config);
     res = pmcs_diff(&end, &start);
-    fprintf(params.output_file,"q4, r, c, %d, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu\n", params.enabled_column_number, config_db.row_size, config_db.row_count, config_db.column_widths[0], cycleLo, res.l1_references, res.l1_refills, res.l2_references, res.l2_refills, res.inst_retired);
-    free(plim_group_array);
+    fprintf(params.output_file,
+            "q4, r, c, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu\n",
+            params.enabled_column_number,
+            config_db.row_size,
+            config_db.row_count,
+            config_db.column_widths[0],
+            res.cycles,
+            res.l1_references,
+            res.l1_refills,
+            res.l2_references,
+            res.l2_refills,
+            res.inst_retired,
+            res.time.tv_sec * 1000000000L + res.time.tv_nsec,
+            res.stall_ctrl_trapper,
+            res.stall_fetch_ctrl,
+            res.stall_fetch_full,
+            res.stall_fetch_memory,
+            res.stall_req_fetch);
 
     plim_group_array = NULL;
     plim_group_array_capacity = 16;
@@ -97,7 +117,7 @@ void run_query4(struct _config_db config_db, struct _config_query params){
     plim_average = 0;
     plim_repetition = 0;
 
-    FlushAndDisable();
+    FlushAndDisable(hpm_fd);
     
     //// start RME hot
     //pmcs_get_value(&start);
@@ -149,8 +169,9 @@ void run_query4(struct _config_db config_db, struct _config_query params){
     int dram_group_array_counter = 0;
     plim_average = 0;  // Keeping the naming as plim_average for consistency
     plim_repetition = 0;
-
+    get_rme_pmcs(&start, config);
     pmcs_get_value(&start);
+    
    // magic_timing_begin(&cycleLo, &cycleHi);
 
     for(int i = 0; i < config_db.row_count; i++) {
@@ -186,14 +207,32 @@ void run_query4(struct _config_db config_db, struct _config_query params){
 
    // magic_timing_end(&cycleLo, &cycleHi);
     pmcs_get_value(&end);
+    get_rme_pmcs(&end, config);
     res = pmcs_diff(&end, &start);
-    fprintf(params.output_file,"q4, d, -, %d, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu\n", params.enabled_column_number, config_db.row_size, config_db.row_count, config_db.column_widths[0], cycleLo, res.l1_references, res.l1_refills, res.l2_references, res.l2_refills, res.inst_retired);
-
+    fprintf(params.output_file,
+            "q4, d, -, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu\n",
+            params.enabled_column_number,
+            config_db.row_size,
+            config_db.row_count,
+            config_db.column_widths[0],
+            res.cycles,
+            res.l1_references,
+            res.l1_refills,
+            res.l2_references,
+            res.l2_refills,
+            res.inst_retired,
+            res.time.tv_sec * 1000000000L + res.time.tv_nsec,
+            res.stall_ctrl_trapper,
+            res.stall_fetch_ctrl,
+            res.stall_fetch_full,
+            res.stall_fetch_memory,
+            res.stall_req_fetch);
     free(dram_group_array);  // Free the dynamically allocated memory
     }
     //************************************* start dram column store *******************************************
     
     if ( config_db.store_type == 'c' ){
+    FlushAndDisable(hpm_fd);
     T* dram_group_array = NULL;
     int dram_group_array_capacity = 16;
     dram_group_array = (T*)malloc(dram_group_array_capacity * sizeof(T));
@@ -205,6 +244,8 @@ void run_query4(struct _config_db config_db, struct _config_query params){
     T plim_average = 0;
     int plim_repetition = 0;
 
+
+    get_rme_pmcs(&start, config);
     pmcs_get_value(&start);
   //  magic_timing_begin(&cycleLo, &cycleHi);
 
@@ -241,9 +282,26 @@ void run_query4(struct _config_db config_db, struct _config_query params){
 
    // magic_timing_end(&cycleLo, &cycleHi);
     pmcs_get_value(&end);
+    get_rme_pmcs(&end, config);
     res = pmcs_diff(&end, &start);
-    fprintf(params.output_file,"q4, c, -, %d, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu\n", params.enabled_column_number, config_db.row_size, config_db.row_count, config_db.column_widths[0], cycleLo, res.l1_references, res.l1_refills, res.l2_references, res.l2_refills, res.inst_retired);
-
+    fprintf(params.output_file,
+            "q4, c, -, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu\n",
+            params.enabled_column_number,
+            config_db.row_size,
+            config_db.row_count,
+            config_db.column_widths[0],
+            res.cycles,
+            res.l1_references,
+            res.l1_refills,
+            res.l2_references,
+            res.l2_refills,
+            res.inst_retired,
+            res.time.tv_sec * 1000000000L + res.time.tv_nsec,
+            res.stall_ctrl_trapper,
+            res.stall_fetch_ctrl,
+            res.stall_fetch_full,
+            res.stall_fetch_memory,
+            res.stall_req_fetch);
     free(dram_group_array);  // Free the dynamically allocated memory
     }
     int ret = teardown_pmcs();

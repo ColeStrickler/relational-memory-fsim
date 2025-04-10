@@ -35,13 +35,17 @@ int configure_relcache(struct _config_db config_db, struct _config_query *params
     WRITE_UINT16(RME_EN_COL(config), params->enabled_column_number);
     WRITE_UINT16(RME_COL_WIDTH(config), config_db.column_width);
     printf("Wrote enabled col number %d\n", params->enabled_column_number);
+
+    unsigned short sum_col_offsets = 0;
     for(int i=0; i<params->enabled_column_number; i+=1){
+
       printf("Offset %d\n", params->col_offsets[i]);
-      WRITE_UINT16(RME_COL_OFFSET(config, i), params->col_offsets[i]); // i think this should work.
+      WRITE_UINT16(RME_COL_OFFSET(config, i), params->col_offsets[i] - sum_col_offsets); // i think this should work.
       printf("Offset %d\n", params->col_offsets[i]);
+      sum_col_offsets = params->col_offsets[i];  
     }
 
-  /*
+    /*
     config->row_size = config_db.row_size;
     config->row_count = config_db.row_count;
     config->enabled_col_num = params->enabled_column_number;
@@ -122,7 +126,7 @@ int EnableRelCache(int fd)
 }
 
 
-void FlushAndDisable(int fd)
+volatile void FlushAndDisable(int fd)
 {
    printf("FlushAndDisable()\n");
     //int lpd_fd  = open_fd();

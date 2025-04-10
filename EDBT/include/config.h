@@ -43,6 +43,13 @@
 #define    LPD0_SIZE  4*KB
 #define    LPD0_ADDR  0x80000000
 
+
+struct col16
+{
+    unsigned long a;
+    unsigned long b;
+};
+
 #define T unsigned char
 #define MAX_GROUPS 11
 #define SIZE (1024 * 1024) // 1MB

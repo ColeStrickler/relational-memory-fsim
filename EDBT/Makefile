@@ -29,7 +29,7 @@ SOURCES = demo.c \
 
 # Compilation flags (adding -lm and -O0)
 # Added -D __aarch64__ for aarch64 specific compilation
-CFLAGS = -I$(INCLUDE_DIR) -lm -O0 -D __aarch64__
+CFLAGS = -I$(INCLUDE_DIR) -lm -O2 -g -D __aarch64__
 
 # The default target (typing 'make' will use this target)
 all: $(SOURCES)

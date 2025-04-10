@@ -6,6 +6,22 @@
 #ifndef PERFORMANCE_COUNTERS_H
 #define PERFORMANCE_COUNTERS_H
 #include <time.h>
+
+
+#define FetchFullStall      0xf00
+#define FetchToCtrlStall    0xf08
+#define FetchToMemoryStall  0xf10
+#define CtrlToTrapperStall  0xf18
+#define ReqDescFullStall    0xf20
+
+
+
+#define RME_CONFIG                  0x3000000
+#define RME_CONFIG_SIZE             0xfff
+
+
+
+
 #define magic_timing_begin(cycleLo, cycleHi){\
   *cycleHi=0;\
   asm volatile("mrs %0, CNTVCT_EL0": "=r"(*cycleLo) );\
@@ -30,6 +46,14 @@ struct perf_counters {
         long unsigned inst_retired; ///< Instructions retired
         long unsigned cycles;
         struct timespec time;
+
+        long unsigned stall_fetch_full; 
+        long unsigned stall_fetch_ctrl;
+        long unsigned stall_fetch_memory;
+        long unsigned stall_ctrl_trapper;
+        long unsigned stall_req_fetch;
+
+
 };
 
 /** @brief Enable user-space access to performance counters.
@@ -46,6 +70,9 @@ int teardown_pmcs(void);
  * @return struct perf_countrers.
  */
 void pmcs_get_value(struct perf_counters* res);
+
+
+void get_rme_pmcs(struct perf_counters* res, unsigned long* config);
 
 struct perf_counters pmcs_diff(struct perf_counters* a, struct perf_counters* b);
 

@@ -25,6 +25,7 @@ void run_query3(struct _config_db config_db, struct _config_query params){
     
     
     unsigned char* plim = mmap(NULL, RELCACHE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, hpm_fd, RELCACHE_ADDR);
+    unsigned long *config = mmap(NULL, RME_CONFIG_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, hpm_fd, RME_CONFIG);
     unsigned char* dram = plim;//mmap(NULL, dram_size, PROT_READ | PROT_WRITE, MAP_SHARED, dram_fd, DRAM_ADDR);
 
     unsigned rme_row_size = 0;
@@ -33,12 +34,13 @@ void run_query3(struct _config_db config_db, struct _config_query params){
     }
 
     T data;
-    T data_count = 0;
+    unsigned int data_count = 0;
     
     if ( config_db.store_type == 'r' ){
 
         EnableRelCache();
         T cold = 0;
+        get_rme_pmcs(&start, config);
         pmcs_get_value(&start);
        // magic_timing_begin(&cycleLo, &cycleHi);
         for (int i = 0; i < config_db.row_count; i++) {
@@ -52,9 +54,27 @@ void run_query3(struct _config_db config_db, struct _config_query params){
         }
        // magic_timing_end(&cycleLo, &cycleHi);
         pmcs_get_value(&end);
+        get_rme_pmcs(&end, config);
         res = pmcs_diff(&end, &start);
-        fprintf(params.output_file,"q3, r, c, %d, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu\n", params.enabled_column_number, config_db.row_size, config_db.row_count, config_db.column_widths[0], cycleLo, res.l1_references, res.l1_refills, res.l2_references, res.l2_refills, res.inst_retired);
-        FlushAndDisable();
+        fprintf(params.output_file,
+            "q3, r, c, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu\n",
+            params.enabled_column_number,
+            config_db.row_size,
+            config_db.row_count,
+            config_db.column_widths[0],
+            res.cycles,
+            res.l1_references,
+            res.l1_refills,
+            res.l2_references,
+            res.l2_refills,
+            res.inst_retired,
+            res.time.tv_sec * 1000000000L + res.time.tv_nsec,
+            res.stall_ctrl_trapper,
+            res.stall_fetch_ctrl,
+            res.stall_fetch_full,
+            res.stall_fetch_memory,
+            res.stall_req_fetch);
+        FlushAndDisable(hpm_fd);
         //T hot = 0;
         //data_count = 0;
         //pmcs_get_value(&start);
@@ -75,6 +95,7 @@ void run_query3(struct _config_db config_db, struct _config_query params){
 
         T row = 0;
         data_count = 0;
+        get_rme_pmcs(&start, config);
         pmcs_get_value(&start);
        // magic_timing_begin(&cycleLo, &cycleHi);
         for (int i = 0; i < config_db.row_count; i++) {
@@ -88,9 +109,26 @@ void run_query3(struct _config_db config_db, struct _config_query params){
         }
       //  magic_timing_end(&cycleLo, &cycleHi);
         pmcs_get_value(&end);
+        get_rme_pmcs(&end, config);
         res = pmcs_diff(&end, &start);
-        fprintf(params.output_file,"q3, d, -, %d, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu\n", params.enabled_column_number, config_db.row_size, config_db.row_count, config_db.column_widths[0], cycleLo, res.l1_references, res.l1_refills, res.l2_references, res.l2_refills, res.inst_retired);
-
+        fprintf(params.output_file,
+            "q3, d, -, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu\n",
+            params.enabled_column_number,
+            config_db.row_size,
+            config_db.row_count,
+            config_db.column_widths[0],
+            res.cycles,
+            res.l1_references,
+            res.l1_refills,
+            res.l2_references,
+            res.l2_refills,
+            res.inst_retired,
+            res.time.tv_sec * 1000000000L + res.time.tv_nsec,
+            res.stall_ctrl_trapper,
+            res.stall_fetch_ctrl,
+            res.stall_fetch_full,
+            res.stall_fetch_memory,
+            res.stall_req_fetch);
         if (config_db.print == true){
           printf("\nQuery results:\n");
           printf("RME cold sum: %d\n", cold);
@@ -104,9 +142,11 @@ void run_query3(struct _config_db config_db, struct _config_query params){
     }
 
     if ( config_db.store_type == 'c' ){
+    FlushAndDisable(hpm_fd);
       T col = 0;
       data_count = 0;
       T *col_array = malloc(config_db.row_count * sizeof(T));
+      get_rme_pmcs(&start, config);
     	pmcs_get_value(&start);
     	//magic_timing_begin(&cycleLo, &cycleHi);
       for (int i = 0; i < config_db.row_count; i++) {
@@ -120,9 +160,27 @@ void run_query3(struct _config_db config_db, struct _config_query params){
       }
     	//magic_timing_end(&cycleLo, &cycleHi);
     	pmcs_get_value(&end);
+        get_rme_pmcs(&end, config);
     	res = pmcs_diff(&end, &start);
-    	fprintf(params.output_file,"q3, c, -, %d, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu\n", params.enabled_column_number, config_db.row_size, config_db.row_count, config_db.column_widths[0], cycleLo, res.l1_references, res.l1_refills, res.l2_references, res.l2_refills, res.inst_retired);
-      free(col_array);   
+    	fprintf(params.output_file,
+            "q3, c, -, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu\n",
+            params.enabled_column_number,
+            config_db.row_size,
+            config_db.row_count,
+            config_db.column_widths[0],
+            res.cycles,
+            res.l1_references,
+            res.l1_refills,
+            res.l2_references,
+            res.l2_refills,
+            res.inst_retired,
+            res.time.tv_sec * 1000000000L + res.time.tv_nsec,
+            res.stall_ctrl_trapper,
+            res.stall_fetch_ctrl,
+            res.stall_fetch_full,
+            res.stall_fetch_memory,
+            res.stall_req_fetch);
+        free(col_array);   
     }
 
     int ret = teardown_pmcs();
@@ -133,6 +191,7 @@ void run_query3(struct _config_db config_db, struct _config_query params){
 
     munmap(plim, RELCACHE_SIZE);
     munmap(dram, dram_size);
+    munmap(config, RME_CONFIG_SIZE);
 
     close(hpm_fd);
     close(dram_fd);

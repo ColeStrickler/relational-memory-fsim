@@ -163,6 +163,16 @@ uint64_t read_cycle() {
     return cycle_count;
 }
 
+uint64_t read_instret() {
+    uint64_t instret;
+    asm volatile ("csrr %0, instret" : "=r"(instret));
+    return instret;
+}
+
+
+
+
+
 
 /** @brief Read performance counters value.
  * @return struct perf_countrers.
@@ -178,10 +188,20 @@ void pmcs_get_value(struct perf_counters* res)
 	res->l1_refills = 0; measurement.l1_refills.value;
 	res->l2_references = 0; measurement.l2_references.value;
 	res->l2_refills = 0; measurement.l2_refills.value;
-    res->inst_retired = 0; measurement.inst_retired.value;
+    res->inst_retired = read_instret(); measurement.inst_retired.value;
 	res->cycles = read_cycle();
 	clock_gettime(CLOCK_MONOTONIC, &res->time);
 }
+#define READ_UINT64(base, offset)(*(uint64_t*)((uint64_t)base + offset))
+void get_rme_pmcs(struct perf_counters* res, unsigned long* config)
+{
+	res->stall_ctrl_trapper = READ_UINT64(config, CtrlToTrapperStall);
+	res->stall_fetch_ctrl = READ_UINT64(config, FetchToCtrlStall);
+	res->stall_fetch_full = READ_UINT64(config, FetchFullStall);
+	res->stall_fetch_memory = READ_UINT64(config, FetchToMemoryStall);
+	res->stall_req_fetch = READ_UINT64(config, ReqDescFullStall);
+}
+
 
 struct perf_counters pmcs_diff(struct perf_counters* a, struct perf_counters* b)
 {
@@ -194,7 +214,10 @@ struct perf_counters pmcs_diff(struct perf_counters* a, struct perf_counters* b)
 	res.cycles = a->cycles - b->cycles;
 	res.time.tv_sec = (a->time.tv_sec - b->time.tv_sec);
 	res.time.tv_nsec = (a->time.tv_nsec - b->time.tv_nsec);
-
-
+	res.stall_ctrl_trapper = (a->stall_ctrl_trapper - b->stall_ctrl_trapper);
+	res.stall_fetch_ctrl = (a->stall_fetch_ctrl - b->stall_fetch_ctrl);
+	res.stall_fetch_full = (a->stall_fetch_full - b->stall_fetch_full);
+	res.stall_fetch_memory = (a->stall_fetch_memory - b->stall_fetch_memory);
+	res.stall_req_fetch = (a->stall_req_fetch - b->stall_req_fetch);
     return res;
 }

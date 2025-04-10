@@ -47,7 +47,9 @@ void run_single_query(struct _config_db *config_db, struct experiment_config *ex
     FILE* fp = open_file(filename, "w");
 
     query_config->output_file = fp;
-    fprintf(fp, "bench, mem, temp, enabled_col_num, row_size, row_count, col_width, cycles, l1_references, l1_refills, l2_references, l2_refills, inst_retired\n");
+    fprintf(fp, "bench, mem, temp, enabled_col_num, row_size, row_count, col_width, cycles, l1_references, \
+    l1_refills, l2_references, l2_refills, inst_retired, time, stall_ctrl_trapper, stall_fetch_ctrl, stall_fetch_full, \
+    stall_fetch_memory, stall_req_fetch\n");
 
     config_db->column_widths = malloc(config_db->num_columns * sizeof(unsigned int));
     config_db->column_types = malloc(config_db->num_columns * sizeof(char));
@@ -87,15 +89,15 @@ void run_query(struct _config_db *config_db, struct _config_query* query_config,
     flush_cache();
 }
 
-void flush_cache() {
-    char *array = malloc(2*SIZE);
+volatile void flush_cache() {
+    char *array = malloc(8*SIZE);
 
     if (array == NULL) {
         fprintf(stderr, "Memory allocation failed\n");
     }
-    memset(array, 0, 2*SIZE);
+    memset(array, 0, 8*SIZE);
 
-    for (int i = 0; i <2*SIZE; ++i) {
+    for (int i = 0; i <8*SIZE; ++i) {
         char value = array[i];
     }
     free(array);
