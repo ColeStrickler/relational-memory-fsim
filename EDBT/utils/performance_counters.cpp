@@ -186,20 +186,24 @@ void pmcs_get_value(struct perf_counters* res)
 	//}
 	res->l1_references = 0; measurement.l1_references.value;
 	res->l1_refills = 0; measurement.l1_refills.value;
-	res->l2_references = 0; measurement.l2_references.value;
-	res->l2_refills = 0; measurement.l2_refills.value;
+	//res->l2_references = 0; measurement.l2_references.value;
+	//res->l2_refills = 0; measurement.l2_refills.value;
     res->inst_retired = read_instret(); measurement.inst_retired.value;
 	res->cycles = read_cycle();
 	clock_gettime(CLOCK_MONOTONIC, &res->time);
 }
 #define READ_UINT64(base, offset)(*(uint64_t*)((uint64_t)base + offset))
-void get_rme_pmcs(struct perf_counters* res, unsigned long* config)
+#define LLCMISSCOUNTER 0x600
+#define LLCACCESSCOUNTER 0x608
+void get_rme_pmcs(struct perf_counters* res, unsigned long* config, unsigned long* cacheperf)
 {
 	res->stall_ctrl_trapper = READ_UINT64(config, CtrlToTrapperStall);
 	res->stall_fetch_ctrl = READ_UINT64(config, FetchToCtrlStall);
 	res->stall_fetch_full = READ_UINT64(config, FetchFullStall);
 	res->stall_fetch_memory = READ_UINT64(config, FetchToMemoryStall);
 	res->stall_req_fetch = READ_UINT64(config, ReqDescFullStall);
+	res->l2_references = READ_UINT64(cacheperf, LLCACCESSCOUNTER);
+	res->l2_refills = READ_UINT64(cacheperf, LLCMISSCOUNTER);
 }
 
 

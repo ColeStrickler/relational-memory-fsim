@@ -18,7 +18,8 @@
 
 #define RME_CONFIG                  0x3000000
 #define RME_CONFIG_SIZE             0xfff
-
+#define CACHE_PERF                  0x2110000
+#define CACHE_PERF_SIZE             0xfff                                    
 
 
 
@@ -72,7 +73,7 @@ int teardown_pmcs(void);
 void pmcs_get_value(struct perf_counters* res);
 
 
-void get_rme_pmcs(struct perf_counters* res, unsigned long* config);
+void get_rme_pmcs(struct perf_counters* res, unsigned long* config, unsigned long* cacheperf);
 
 struct perf_counters pmcs_diff(struct perf_counters* a, struct perf_counters* b);
 

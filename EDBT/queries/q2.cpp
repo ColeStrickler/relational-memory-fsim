@@ -13,9 +13,9 @@ void run_query2(struct _config_db config_db, struct _config_query params){
     
     T data;
 
-    T *cold_array = malloc(config_db.row_count * sizeof(T));
-    T *hot_array = malloc(config_db.row_count * sizeof(T));
-    T *row_array = malloc(config_db.row_count * sizeof(T));
+    T *cold_array = (T*)malloc(config_db.row_count * sizeof(T));
+    T *hot_array =  (T*)malloc(config_db.row_count * sizeof(T));
+    T *row_array =  (T*)malloc(config_db.row_count * sizeof(T));
     
 
     unsigned dram_size  = config_db.row_count*config_db.row_size;
@@ -27,8 +27,9 @@ void run_query2(struct _config_db config_db, struct _config_query params){
         perror("Issue opening PMC FDs\n");
 
     //mapping fpga:
-    unsigned long *config = mmap(NULL, RME_CONFIG_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, hpm_fd, RME_CONFIG);
-    unsigned char* plim = mmap((void*)0, RELCACHE_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, hpm_fd, RELCACHE_ADDR);
+    unsigned long *cperf =  (unsigned long*)mmap(NULL, CACHE_PERF_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, hpm_fd, CACHE_PERF);
+    unsigned long *config = (unsigned long*)mmap(NULL, RME_CONFIG_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, hpm_fd, RME_CONFIG);
+    unsigned char* plim =   (unsigned char*)mmap((void*)0, RELCACHE_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, hpm_fd, RELCACHE_ADDR);
     //mapping dram
     unsigned char* dram = plim;//mmap((void*)0, dram_size, PROT_READ|PROT_WRITE, MAP_SHARED, dram_fd, DRAM_ADDR);
 
@@ -42,8 +43,9 @@ void run_query2(struct _config_db config_db, struct _config_query params){
 
     if ( config_db.store_type == 'r' ){
         EnableRelCache(hpm_fd);
-        get_rme_pmcs(&start, config);
+        get_rme_pmcs(&start, config, cperf);
         pmcs_get_value(&start);
+        printf("Running row store q2\n");
        // magic_timing_begin(&cycleLo, &cycleHi);
         for (int i = 0; i < config_db.row_count; i++) {
             T second_column_value = *(T*)(plim + i * rme_row_size + params.col_offsets[1]);
@@ -54,7 +56,7 @@ void run_query2(struct _config_db config_db, struct _config_query params){
         }
        //magic_timing_end(&cycleLo, &cycleHi);
         pmcs_get_value(&end);
-        get_rme_pmcs(&end, config);
+        get_rme_pmcs(&end, config, cperf);
         res = pmcs_diff(&end, &start);
         fprintf(params.output_file,
             "q2, r, c, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu\n",
@@ -91,7 +93,7 @@ void run_query2(struct _config_db config_db, struct _config_query params){
         //fprintf(params.output_file,"q2, r, h, %d, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu\n", params.enabled_column_number, config_db.row_size, config_db.row_count, config_db.column_widths[0], cycleLo, res.l1_references, res.l1_refills, res.l2_references, res.l2_refills, res.inst_retired);
         
         data_count = 0;
-        get_rme_pmcs(&start, config);
+        get_rme_pmcs(&start, config, cperf);
         pmcs_get_value(&start);
        // magic_timing_begin(&cycleLo, &cycleHi);
         for (int i = 0; i < config_db.row_count; i++) {
@@ -103,7 +105,7 @@ void run_query2(struct _config_db config_db, struct _config_query params){
         }
        // magic_timing_end(&cycleLo, &cycleHi);
         pmcs_get_value(&end);
-        get_rme_pmcs(&end, config);
+        get_rme_pmcs(&end, config, cperf);
         res = pmcs_diff(&end, &start);
         fprintf(params.output_file,
             "q2, -, d, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu\n",
@@ -140,9 +142,9 @@ void run_query2(struct _config_db config_db, struct _config_query params){
     if ( config_db.store_type == 'c' ){
         FlushAndDisable(hpm_fd);
         data_count = 0;
-        T *col_array = malloc(config_db.row_count * sizeof(T));
+        T *col_array = (T*)malloc(config_db.row_count * sizeof(T));
         // Compute the product of row_count and column offset outside the loop
-        get_rme_pmcs(&start, config);
+        get_rme_pmcs(&start, config, cperf);
     	pmcs_get_value(&start);
     	//magic_timing_begin(&cycleLo, &cycleHi);
 
@@ -158,7 +160,7 @@ void run_query2(struct _config_db config_db, struct _config_query params){
     	//magic_timing_end(&cycleLo, &cycleHi);
         
     	pmcs_get_value(&end);
-        get_rme_pmcs(&end, config);
+        get_rme_pmcs(&end, config, cperf);
     	res = pmcs_diff(&end, &start);
     	
         fprintf(params.output_file,
@@ -186,6 +188,7 @@ void run_query2(struct _config_db config_db, struct _config_query params){
 
     munmap(plim, RELCACHE_SIZE);
     munmap(config, RME_CONFIG_SIZE);
+    munmap(cperf, CACHE_PERF_SIZE);
     //munmap(dram, dram_size);
 
     close(hpm_fd);

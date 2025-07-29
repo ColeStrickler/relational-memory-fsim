@@ -19,13 +19,13 @@ void run_query3(struct _config_db config_db, struct _config_query params){
     if (fd < 0)
         perror("Issue opening PMC FDs\n");
 
-    T *cold_array = malloc(config_db.row_count * sizeof(T));
-    T *hot_array = malloc(config_db.row_count * sizeof(T));
-    T *row_array = malloc(config_db.row_count * sizeof(T));
+    T *cold_array = (T*)malloc(config_db.row_count * sizeof(T));
+    T *hot_array =  (T*)malloc(config_db.row_count * sizeof(T));
+    T *row_array =  (T*)malloc(config_db.row_count * sizeof(T));
     
-    
-    unsigned char* plim = mmap(NULL, RELCACHE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, hpm_fd, RELCACHE_ADDR);
-    unsigned long *config = mmap(NULL, RME_CONFIG_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, hpm_fd, RME_CONFIG);
+    unsigned long *cperf =  (unsigned long*)mmap(NULL, CACHE_PERF_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, hpm_fd, CACHE_PERF);
+    unsigned char* plim =   (unsigned char*)mmap(NULL, RELCACHE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, hpm_fd, RELCACHE_ADDR);
+    unsigned long *config = (unsigned long*)mmap(NULL, RME_CONFIG_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, hpm_fd, RME_CONFIG);
     unsigned char* dram = plim;//mmap(NULL, dram_size, PROT_READ | PROT_WRITE, MAP_SHARED, dram_fd, DRAM_ADDR);
 
     unsigned rme_row_size = 0;
@@ -38,9 +38,9 @@ void run_query3(struct _config_db config_db, struct _config_query params){
     
     if ( config_db.store_type == 'r' ){
 
-        EnableRelCache();
+        EnableRelCache(hpm_fd);
         T cold = 0;
-        get_rme_pmcs(&start, config);
+        get_rme_pmcs(&start, config, cperf);
         pmcs_get_value(&start);
        // magic_timing_begin(&cycleLo, &cycleHi);
         for (int i = 0; i < config_db.row_count; i++) {
@@ -54,7 +54,7 @@ void run_query3(struct _config_db config_db, struct _config_query params){
         }
        // magic_timing_end(&cycleLo, &cycleHi);
         pmcs_get_value(&end);
-        get_rme_pmcs(&end, config);
+        get_rme_pmcs(&end, config, cperf);
         res = pmcs_diff(&end, &start);
         fprintf(params.output_file,
             "q3, r, c, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu\n",
@@ -95,7 +95,7 @@ void run_query3(struct _config_db config_db, struct _config_query params){
 
         T row = 0;
         data_count = 0;
-        get_rme_pmcs(&start, config);
+        get_rme_pmcs(&start, config, cperf);
         pmcs_get_value(&start);
        // magic_timing_begin(&cycleLo, &cycleHi);
         for (int i = 0; i < config_db.row_count; i++) {
@@ -109,7 +109,7 @@ void run_query3(struct _config_db config_db, struct _config_query params){
         }
       //  magic_timing_end(&cycleLo, &cycleHi);
         pmcs_get_value(&end);
-        get_rme_pmcs(&end, config);
+        get_rme_pmcs(&end, config, cperf);
         res = pmcs_diff(&end, &start);
         fprintf(params.output_file,
             "q3, d, -, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu\n",
@@ -145,8 +145,8 @@ void run_query3(struct _config_db config_db, struct _config_query params){
     FlushAndDisable(hpm_fd);
       T col = 0;
       data_count = 0;
-      T *col_array = malloc(config_db.row_count * sizeof(T));
-      get_rme_pmcs(&start, config);
+      T *col_array = (T*)malloc(config_db.row_count * sizeof(T));
+      get_rme_pmcs(&start, config, cperf);
     	pmcs_get_value(&start);
     	//magic_timing_begin(&cycleLo, &cycleHi);
       for (int i = 0; i < config_db.row_count; i++) {
@@ -160,7 +160,7 @@ void run_query3(struct _config_db config_db, struct _config_query params){
       }
     	//magic_timing_end(&cycleLo, &cycleHi);
     	pmcs_get_value(&end);
-        get_rme_pmcs(&end, config);
+        get_rme_pmcs(&end, config, cperf);
     	res = pmcs_diff(&end, &start);
     	fprintf(params.output_file,
             "q3, c, -, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu\n",
@@ -191,6 +191,7 @@ void run_query3(struct _config_db config_db, struct _config_query params){
 
     munmap(plim, RELCACHE_SIZE);
     munmap(dram, dram_size);
+    munmap(cperf, CACHE_PERF_SIZE);
     munmap(config, RME_CONFIG_SIZE);
 
     close(hpm_fd);

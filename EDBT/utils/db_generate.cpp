@@ -53,7 +53,7 @@ void generate_db(struct _config_db config) {
     // #endif
 
     int hpm_fd = open_fd();
-    unsigned char* db = mmap((void*)0, db_size, PROT_EXEC|PROT_READ|PROT_WRITE, MAP_SHARED, hpm_fd, RELMEM_ADDR); //Uncached mapping
+    unsigned char* db = (unsigned char*)mmap((void*)0, db_size, PROT_EXEC|PROT_READ|PROT_WRITE, MAP_SHARED, hpm_fd, RELMEM_ADDR); //Uncached mapping
 
     for (int i = 0; i < db_size; i++) {
         db[i] = 0;            

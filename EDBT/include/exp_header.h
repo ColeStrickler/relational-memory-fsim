@@ -7,7 +7,7 @@ void generate_db(struct _config_db config);
 int configure_relcache(struct _config_db config, struct _config_query *params);
 void call_db_reset_relcache(int value);
 int reset_relcache(unsigned int frame_offset);
-int EnableRelCache();
+int EnableRelCache(int fd);
 void FlushAndDisable(int fd);
 
 

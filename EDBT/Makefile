@@ -1,44 +1,48 @@
-# Define the default C compiler for aarch64
-CC = riscv64-unknown-linux-gnu-gcc
-CC2 = aarch64-linux-gnu-gcc
-
-# Define the output name for the compiled program
+# Target output
 OUTPUT = new_demo
 
-# Define where the header files are located
+# Cross compiler
+CXX = riscv64-unknown-linux-gnu-g++
+
+# Native Compiler
+CXX_X86 = g++
+
+# Directories
 INCLUDE_DIR = ./include
+UTILS_DIR   = ./utils
+QUERY_DIR   = ./queries
+DTL_DIR     = ./dtl/src
 
-# Define where the utility source files are located
-UTILS_DIR = ./utils
+# Compilation flags
+CXXFLAGS = -I$(INCLUDE_DIR) -I$(DTL_DIR) -O2 -g -D __aarch64__ -std=c++17
 
-QUERY_DIR = ./queries
+# C++ source files
+CPP_SOURCES = demo.cpp \
+              $(wildcard $(UTILS_DIR)/*.cpp) \
+              $(wildcard $(QUERY_DIR)/*.cpp)
 
-# All the .c source files
-SOURCES = demo.c \
-          $(UTILS_DIR)/db_generate.c \
-          $(UTILS_DIR)/db_relcache.c \
-          $(UTILS_DIR)/exp_config.c \
-          $(UTILS_DIR)/parse_config.c \
-          $(UTILS_DIR)/performance_counters.c \
-          $(UTILS_DIR)/print_utils.c \
-          $(QUERY_DIR)/q4.c\
-          $(QUERY_DIR)/q1.c\
-          $(QUERY_DIR)/q2.c\
-          $(QUERY_DIR)/q3.c\
-          $(QUERY_DIR)/experiments.c
+# Object files
+OBJS = $(CPP_SOURCES:.cpp=.o)
 
-# Compilation flags (adding -lm and -O0)
-# Added -D __aarch64__ for aarch64 specific compilation
-CFLAGS = -I$(INCLUDE_DIR) -lm -O2 -g -D __aarch64__
+# Default target
+all: $(DTL_DIR)/libdtl.a $(DTL_DIR)/frontend.hh $(OUTPUT)
 
-# The default target (typing 'make' will use this target)
-all: $(SOURCES)
-	$(CC) $(CFLAGS) $(SOURCES) -o $(OUTPUT)
+# Link final binary
+$(OUTPUT): $(OBJS)
+	$(CXX) $(CXXFLAGS) $(OBJS) -L$(DTL_DIR) -ldtl -o $@
 
-all2: clean $(SOURCES)
-	$(CC2) $(CFLAGS) $(SOURCES) -o $(OUTPUT)
+# Compile .cpp files
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# Clean target to remove output and intermediate files
+# Ensure DTL is built first (including frontend.hh and libdtl.a)
+$(DTL_DIR)/libdtl.a:
+	$(MAKE) -C $(DTL_DIR)
+
+$(DTL_DIR)/frontend.hh: $(DTL_DIR)/parser.yy
+	$(MAKE) -C $(DTL_DIR)
+
+# Clean everything
 clean:
-	rm -f $(OUTPUT) *.o
-
+	rm -f $(OUTPUT) $(OBJS)
+	$(MAKE) -C $(DTL_DIR) clean

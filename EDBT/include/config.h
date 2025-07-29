@@ -50,7 +50,10 @@ struct col16
     unsigned long b;
 };
 
-#define T unsigned char
+//#define T (unsigned char)
+typedef unsigned char T;
+
+
 #define MAX_GROUPS 11
 #define SIZE (1024 * 1024) // 1MB
 #define COLUMN_WIDTH 4
@@ -97,7 +100,7 @@ struct _config {
 }; 
 
 int open_fd();
-void flush_cache();
+volatile void flush_cache();
 
 
 #endif // CONFIG_H

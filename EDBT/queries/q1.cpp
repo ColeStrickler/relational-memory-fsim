@@ -1,6 +1,24 @@
 #define _GNU_SOURCE
 #include "exp_header.h"
 #include "performance_counters.h"
+#include "dtl_api.hpp"
+#include <fstream>
+#include <string>
+
+std::string FileToString(const std::string& file_)
+{
+  std::ifstream file(file_);
+    if (!file) {
+        std::cerr << "Failed to open file\n";
+        return "";
+    }
+
+    std::stringstream buffer;
+    buffer << file.rdbuf();  // Read entire file into the buffer
+    std::string contents = buffer.str();
+    return contents;
+}
+
 
 /*
   Before this we were reading 4 bytes every time no matter what column size
@@ -33,13 +51,13 @@ void run_query1(struct _config_db config_db, struct _config_query params) {
 
   bool mvcc_enabled = false;
   T *cold_array =
-      malloc(config_db.row_count * params.enabled_column_number * sizeof(T));
+      (T*)malloc(config_db.row_count * params.enabled_column_number * sizeof(T));
   T *hot_array =
-      malloc(config_db.row_count * params.enabled_column_number * sizeof(T));
+      (T*)malloc(config_db.row_count * params.enabled_column_number * sizeof(T));
   T *row_array =
-      malloc(config_db.row_count * params.enabled_column_number * sizeof(T));
+      (T*)malloc(config_db.row_count * params.enabled_column_number * sizeof(T));
   T *col_array =
-        malloc(config_db.row_count * params.enabled_column_number * sizeof(T));
+      (T*)malloc(config_db.row_count * params.enabled_column_number * sizeof(T));
   unsigned sum_col_width = 0;
   for (int i = 0; i < params.enabled_column_number; i++) {
     sum_col_width += config_db.column_widths[i];
@@ -55,14 +73,40 @@ void run_query1(struct _config_db config_db, struct _config_query params) {
   // we took out their extra flag
   printf("mapping plim\n");
 
+  auto hwStat = new DTL::AGUHardwareStat(4, 4, 5, 6, 6, 4, 8);
+  DTL::API api(hwStat);
+  
+  
 
-  unsigned long *config = mmap(NULL, RME_CONFIG_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, hpm_fd, RME_CONFIG);
-  unsigned char *plim = mmap((void *)0,
+
+
+
+  unsigned long *config =     (unsigned long*)mmap(NULL, RME_CONFIG_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, hpm_fd, RME_CONFIG);
+  void* agu_config_base =  mmap(NULL, 0xfff, PROT_READ|PROT_WRITE, MAP_SHARED, hpm_fd, 0x4000000);  
+  assert(agu_config_base != nullptr);                                                                                            
+  unsigned long *cperf =      (unsigned long*)mmap(NULL, CACHE_PERF_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, hpm_fd, CACHE_PERF);
+  unsigned char *plim = (unsigned char*)mmap((void *)0,
                              RELCACHE_SIZE,
                              PROT_READ | PROT_WRITE,
                              MAP_SHARED,
                              hpm_fd,
                              RELCACHE_ADDR);
+
+
+  api.SetBaseAddr((uint64_t)agu_config_base);
+  if (!api.Compile(FileToString("./aguconfig")))
+  {
+    printf("Failed to compile dtl program or map onto agu\n");
+    return;
+  }
+
+  printf("Successfully compiled dtl\n");
+  api.ProgramHardware();
+  printf("Successfully programmed agu\n");
+  
+
+
+
   printf("mapped plim\n");
   // mapping dram
   printf("mapping DRAM\n");
@@ -85,11 +129,14 @@ void run_query1(struct _config_db config_db, struct _config_query params) {
        // move multiplication outside
     EnableRelCache(hpm_fd);
     
-    get_rme_pmcs(&start, config);
+    get_rme_pmcs(&start, config, cperf);
     pmcs_get_value(&start);
     //  magic_timing_begin(&cycleLo, &cycleHi);
+
+
+
     for (int i = 0; i < config_db.row_count; i++) {
-      for (int j = 0; j < params.enabled_column_number; j++) {
+      for (int j = 0; j < params.enabled_column_number; j++) {\
          cold_array[data_count++] = // change back?
             *(T *)(plim + i * sum_col_width + width * j);
         // cold_array[data_count] = readData(&config_db, (plim + i*sum_col_width
@@ -98,7 +145,7 @@ void run_query1(struct _config_db config_db, struct _config_query params) {
     }    
     //  magic_timing_end(&cycleLo, &cycleHi);
     pmcs_get_value(&end);
-    get_rme_pmcs(&end, config);
+    get_rme_pmcs(&end, config, cperf);
     res = pmcs_diff(&end, &start);
     fprintf(params.output_file,
             "q1, r, c, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu\n",
@@ -143,7 +190,7 @@ void run_query1(struct _config_db config_db, struct _config_query params) {
     // res.l1_references, res.l1_refills, res.l2_references, res.l2_refills,
     // res.inst_retired, res.time.tv_sec*1000000000L+res.time.tv_nsec);
     data_count = 0;
-    get_rme_pmcs(&start, config);
+    get_rme_pmcs(&start, config, cperf);
     pmcs_get_value(&start);
     // magic_timing_begin(&cycleLo, &cycleHi);
     for (int i = 0; i < config_db.row_count; i++) {
@@ -156,7 +203,7 @@ void run_query1(struct _config_db config_db, struct _config_query params) {
 
     // magic_timing_end(&cycleLo, &cycleHi);
     pmcs_get_value(&end);
-    get_rme_pmcs(&end, config);
+    get_rme_pmcs(&end, config, cperf);
     res = pmcs_diff(&end, &start);
     fprintf(params.output_file,
             "q1, d, -, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu, %lu,%lu, %lu, %lu, %lu, %lu, %lu\n",
@@ -197,7 +244,7 @@ void run_query1(struct _config_db config_db, struct _config_query params) {
     uint64_t sum_col = 0;
     
     data_count = 0;
-    get_rme_pmcs(&start, config);
+    get_rme_pmcs(&start, config, cperf);
     pmcs_get_value(&start);
     // magic_timing_begin(&cycleLo, &cycleHi);
     for (int i = 0; i < config_db.row_count; i++) {
@@ -213,7 +260,7 @@ void run_query1(struct _config_db config_db, struct _config_query params) {
     }
     //  magic_timing_end(&cycleLo, &cycleHi);
     pmcs_get_value(&end);
-    get_rme_pmcs(&end, config);
+    get_rme_pmcs(&end, config, cperf);
     res = pmcs_diff(&end, &start);
     fprintf(params.output_file,
             "q1, c, -, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu, %lu,%lu, %lu, %lu, %lu, %lu, %lu\n",
@@ -250,6 +297,7 @@ void run_query1(struct _config_db config_db, struct _config_query params) {
   fflush(params.output_file);
 
   munmap(plim, RELCACHE_SIZE);
+  munmap(cperf, CACHE_PERF_SIZE);
   munmap(config, RME_CONFIG_SIZE);
   // munmap(dram, dram_size);
 

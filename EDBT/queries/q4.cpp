@@ -31,8 +31,9 @@ void run_query4(struct _config_db config_db, struct _config_query params){
         perror("Issue opening PMC FDs\n");
 
     //mapping fpga:
-    unsigned long *config = mmap(NULL, RME_CONFIG_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, hpm_fd, RME_CONFIG);
-    T* plim = mmap((void*)0, RELCACHE_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, hpm_fd, RELCACHE_ADDR);
+    unsigned long *cperf =  (unsigned long*)mmap(NULL, CACHE_PERF_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, hpm_fd, CACHE_PERF);
+    unsigned long *config = (unsigned long*)mmap(NULL, RME_CONFIG_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, hpm_fd, RME_CONFIG);
+    T* plim =               (T*)mmap((void*)0, RELCACHE_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, hpm_fd, RELCACHE_ADDR);
     //mapping dram
     T* dram = plim;//mmap((void*)0, dram_size, PROT_READ|PROT_WRITE, MAP_SHARED, dram_fd, DRAM_ADDR);
 
@@ -48,8 +49,8 @@ void run_query4(struct _config_db config_db, struct _config_query params){
     T plim_average = 0;
     int plim_repetition = 0;
     
-    EnableRelCache();
-    get_rme_pmcs(&start, config);
+    EnableRelCache(hpm_fd);
+    get_rme_pmcs(&start, config, cperf);
     pmcs_get_value(&start);
 
   //  magic_timing_begin(&cycleLo, &cycleHi);
@@ -85,7 +86,7 @@ void run_query4(struct _config_db config_db, struct _config_query params){
     }
    // magic_timing_end(&cycleLo, &cycleHi);
     pmcs_get_value(&end);
-    get_rme_pmcs(&end, config);
+    get_rme_pmcs(&end, config, cperf);
     res = pmcs_diff(&end, &start);
     fprintf(params.output_file,
             "q4, r, c, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu\n",
@@ -169,7 +170,7 @@ void run_query4(struct _config_db config_db, struct _config_query params){
     int dram_group_array_counter = 0;
     plim_average = 0;  // Keeping the naming as plim_average for consistency
     plim_repetition = 0;
-    get_rme_pmcs(&start, config);
+    get_rme_pmcs(&start, config, cperf);
     pmcs_get_value(&start);
     
    // magic_timing_begin(&cycleLo, &cycleHi);
@@ -207,7 +208,7 @@ void run_query4(struct _config_db config_db, struct _config_query params){
 
    // magic_timing_end(&cycleLo, &cycleHi);
     pmcs_get_value(&end);
-    get_rme_pmcs(&end, config);
+    get_rme_pmcs(&end, config, cperf);
     res = pmcs_diff(&end, &start);
     fprintf(params.output_file,
             "q4, d, -, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu\n",
@@ -245,7 +246,7 @@ void run_query4(struct _config_db config_db, struct _config_query params){
     int plim_repetition = 0;
 
 
-    get_rme_pmcs(&start, config);
+    get_rme_pmcs(&start, config, cperf);
     pmcs_get_value(&start);
   //  magic_timing_begin(&cycleLo, &cycleHi);
 
@@ -282,7 +283,7 @@ void run_query4(struct _config_db config_db, struct _config_query params){
 
    // magic_timing_end(&cycleLo, &cycleHi);
     pmcs_get_value(&end);
-    get_rme_pmcs(&end, config);
+    get_rme_pmcs(&end, config, cperf);
     res = pmcs_diff(&end, &start);
     fprintf(params.output_file,
             "q4, c, -, %d, %d, %d, %d, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu\n",
@@ -312,6 +313,7 @@ void run_query4(struct _config_db config_db, struct _config_query params){
 
     munmap(plim, RELCACHE_SIZE);
     munmap(dram, dram_size);
+    munmap(cperf, CACHE_PERF_SIZE);
 
     close(hpm_fd);
     close(dram_fd);

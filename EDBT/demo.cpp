@@ -51,8 +51,8 @@ void run_single_query(struct _config_db *config_db, struct experiment_config *ex
     l1_refills, l2_references, l2_refills, inst_retired, time, stall_ctrl_trapper, stall_fetch_ctrl, stall_fetch_full, \
     stall_fetch_memory, stall_req_fetch\n");
 
-    config_db->column_widths = malloc(config_db->num_columns * sizeof(unsigned int));
-    config_db->column_types = malloc(config_db->num_columns * sizeof(char));
+    config_db->column_widths =  (unsigned int*)malloc(config_db->num_columns * sizeof(unsigned int));
+    config_db->column_types =   (char*)malloc(config_db->num_columns * sizeof(char));
     for (int i = 0; i < config_db->num_columns; i++) {
         config_db->column_widths[i] = exp_config->r_col;
         config_db->column_types[i] = config_db->col_type;
@@ -90,7 +90,7 @@ void run_query(struct _config_db *config_db, struct _config_query* query_config,
 }
 
 volatile void flush_cache() {
-    char *array = malloc(8*SIZE);
+    char *array = (char*)malloc(8*SIZE);
 
     if (array == NULL) {
         fprintf(stderr, "Memory allocation failed\n");
@@ -114,6 +114,7 @@ int main(int argc, char **argv) {
     while ((opt = getopt(argc, argv, "r:q:phl")) != -1) {
         switch (opt) {
             case 'r': 
+            {
                 query_name = optarg;
                 char *filename = get_filename_from_query_type(query_name[1]);
                 setup(argc, argv, query_name, &config_db, &exp_args, &config_query);
@@ -125,7 +126,9 @@ int main(int argc, char **argv) {
                 print_dotted_line(50);
                 printf("Experiment results were saved in: %s\n\n", filename);
                 break;
+            }
             case 'p':
+            {
                 query_name = "q1";
                 set_config(1, &config_db, &exp_args, &config_query);
                 char *filename_proj = "data/result_projectivity.csv";
@@ -135,7 +138,9 @@ int main(int argc, char **argv) {
                 print_dotted_line(50);
                 printf("Experiment results were saved in: %s\n\n", filename_proj);
                 break;
+            }
             case 'q':
+            {
                 query_name = optarg;
                 char *filename_single = get_filename_from_query_type(query_name[1]);
                 setup(argc, argv, query_name, &config_db, &exp_args, &config_query);
@@ -145,13 +150,19 @@ int main(int argc, char **argv) {
 
                 printf("Performance results were saved in: %s\n", filename_single);
                 break;
+            }
             case 'h':
+            {
                 print_help(argv[0]);
                 exit(EXIT_SUCCESS);
                 break;
+            }
             default:
+            {
                 fprintf(stderr, "Invalid option. Use -h for help.\n");
                 exit(EXIT_FAILURE);
+            }
+                
         }
     }
 

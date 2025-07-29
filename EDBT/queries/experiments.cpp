@@ -18,8 +18,8 @@ void row_size_exp(struct _config_db *config_db, struct experiment_config *exp_co
             config_db->store_type = 'r';
             config_db->row_size = row_size;
             config_db->num_columns = row_size / exp_config->r_col;
-            config_db->column_widths = malloc(config_db->num_columns * sizeof(unsigned int));
-            config_db->column_types = malloc(config_db->num_columns * sizeof(char));
+            config_db->column_widths = (unsigned int*)malloc(config_db->num_columns * sizeof(unsigned int));
+            config_db->column_types = (char*)malloc(config_db->num_columns * sizeof(char));
             for (int i = 0; i < config_db->num_columns; i++) {
                 config_db->column_widths[i] = exp_config->r_col;
                 config_db->column_types[i] = config_db->col_type;
@@ -60,8 +60,8 @@ void projectivity_exp(struct _config_db *config_db, struct experiment_config *ex
             }
             
             query_config->enabled_column_number = num_columns;
-            config_db->column_widths = malloc(config_db->num_columns * sizeof(unsigned int));
-            config_db->column_types = malloc(config_db->num_columns * sizeof(char));
+            config_db->column_widths = (unsigned int*)malloc(config_db->num_columns * sizeof(unsigned int));
+            config_db->column_types = (char *)malloc(config_db->num_columns * sizeof(char));
             for (int i = 0; i < config_db->num_columns; i++) {
                 config_db->column_widths[i] = exp_config->r_col;
                 config_db->column_types[i] = config_db->col_type;
