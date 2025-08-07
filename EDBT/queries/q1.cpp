@@ -99,9 +99,9 @@ void run_query1(struct _config_db config_db, struct _config_query params) {
     printf("Failed to compile dtl program or map onto agu\n");
     return;
   }
+  api.ProgramHardware();
 
   printf("Successfully compiled dtl\n");
-  api.ProgramHardware();
   printf("Successfully programmed agu\n");
   
 

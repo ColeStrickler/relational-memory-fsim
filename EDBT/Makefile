@@ -14,7 +14,7 @@ QUERY_DIR   = ./queries
 DTL_DIR     = ./dtl/src
 
 # Compilation flags
-CXXFLAGS = -I$(INCLUDE_DIR) -I$(DTL_DIR) -O2 -g -D __aarch64__ -std=c++17
+CXXFLAGS = -I$(INCLUDE_DIR) -I$(DTL_DIR) -O3 -g -D __aarch64__ -std=c++17
 
 # C++ source files
 CPP_SOURCES = demo.cpp \
